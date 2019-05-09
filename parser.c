@@ -39,10 +39,24 @@ int parseString(char *string, char* res[])
 
 		case 2:
 		{
-			for (int k = 0; k < 4; k++)
+			int error = 0;
+			switch (string[0])
 			{
-				strcpy(res[k], "ERROR");
+				case ' ':
+					break;
+				case '	':
+					break;
+				case '\0':
+					break;
+				default:
+					error = 1;
 			}
+
+			if (error)
+				for (int k = 0; k < 4; k++)
+				{
+					strcpy(res[k], "ERROR");
+				}
 			return 0;
 		}
 	}
@@ -99,7 +113,7 @@ int parseString(char *string, char* res[])
 			temp[c++] = string[i]; // записываем каждый "значащий" символ во временный буфер
 
 			if (((string[i+1] == ' ') || (i+1 == length-1) || (string[i+1] == ',') ))
-			{
+			{	
 				if (strlen(res[1]) == 0)
 				{
 					strncpy(res[1], temp, c); // оператор
@@ -132,7 +146,7 @@ int parseString(char *string, char* res[])
 	return 1;
 }
 
-void printResult(char* res[])
+void printParsedString(char* res[])
 {
 	int i = 0;
 	printf("%s'%s' | ", "Метка: ", res[i++]);
@@ -164,7 +178,7 @@ int main_3(int argc, char *argv[])
 		if (parseString(str, res))
 		{
 			printf("Оригинал: '%s'\n", rmSymbs(str, "\n"));
-			printResult(res);
+			printParsedString(res);
 		}
 		else
 		{
