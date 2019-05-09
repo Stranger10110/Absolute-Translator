@@ -12,5 +12,5 @@ void toLowerCase(char *string);
 
 int parseString(char *string, char* res[]);
 
-void printResult(char* res[]);
+void printParsedString(char* res[]);
 

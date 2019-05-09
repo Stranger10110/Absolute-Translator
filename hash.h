@@ -13,22 +13,24 @@
 typedef struct {
 	char* key;
 	int Data;
-}DataRecord;
+} DataRecord;
 
 typedef struct {
 	DataRecord* Table;
-	int Data[5];
+	int Data[2];
 } Result;
 
 int Hash(char *key, int m, int shift);
 
 int insertKey(DataRecord* hashTable, char *key, int h, int code);
 
-int getKey(DataRecord *hashTable, char* key, int m);
+int getKey(DataRecord *hashTable, char* key, int m, int shift);
+
+int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift);
 
 void printHashTable(DataRecord* hashTable, int m);
 
-DataRecord* initHashTable(char word[][STRING], int num, int m, int shift, int *collisions);
+DataRecord* initHashTable(char word[][STRING], int num, int m, int shift, int data, int *collisions);
 
-Result* hashTable(char words[][STRING]);
+Result* hashTable(char words[][STRING], int data);
 
