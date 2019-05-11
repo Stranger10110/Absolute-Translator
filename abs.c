@@ -2,26 +2,41 @@
 #include "hash.h"
 #include "abs.h"
 
-void firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *labelsTable)
+void firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *labelsTable, DataRecord *namesTable)
 {	
 	int placeCounter = 1000;
+	char *labels = (char*)calloc(numberOfStrings, sizeof(char)); int l;
+	char *names = (char*)calloc(numberOfStrings, sizeof(char)); int n;
 
 	for (int i = 0; i < numberOfStrings; i++)
 	{	
+		int case_ = 0, case__[5] = { 7, 11, 13, 17, 0 };
 		for (int k = 0; k < 5; k++)
 		{
 			if (strlen(parsedStrings[i][k]) != 0)
-				switch (k)
-				{
-				case 0: // метка
-					break;
+				case_ += case__[k];
+			
+			switch (case_)
+			{
+			case 48: // метка, оператор, операнд_1, операнд_2
 
-				case 2: // операнд 1
-					break;
+				break;
 
-				case 3: // операнд 2
-					break;
-				}
+			case 41: // оператор, операнд_1, операнд_2
+				break;
+
+			case 24: // оператор, операнд_1
+				break;
+			
+			case 31: // метка, оператор, операнд_1
+				break;
+
+			case 11: // оператор
+				break;
+
+			case 18: // метка, оператор
+				break;
+			}
 		}
 	}
 }
@@ -37,6 +52,13 @@ int main(int argc, char *argv[])
 	DataRecord *commandsTable = result->Table;
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
+
+	char *t[1] = { "" };
+	result = hashTable(commands, 1, 1);
+	DataRecord *labelsTable = result->Table;
+	int com_m = result->Data[0];
+	int com_shift = result->Data[1];
+	DataRecord *namesTable = hashTable(t, 1, 1);
 
 
 	printf("\n\nWorking...\n\n");
@@ -75,9 +97,7 @@ int main(int argc, char *argv[])
 
 	printf("\nFirst pass: \n\n");
 
-	char *t[1] = {""};
-	DataRecord *labelsTable = hashTable(t, 1, 1);
-	firstPass(parsedStrings, numberOfStrings, labelsTable);
+	firstPass(parsedStrings, numberOfStrings, labelsTable, namesTable);
 
 	fclose(fp);
 	return 0;
