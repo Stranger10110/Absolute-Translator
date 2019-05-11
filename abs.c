@@ -2,17 +2,19 @@
 #include "hash.h"
 #include "abs.h"
 
-int* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registersTable, int r_m, int r_s, DataRecord *labelsTable, int l_m, int l_s, DataRecord *namesTable, int n_m, int n_s)
+int* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registersTable, int r_m, int r_s, DataRecord *labelsTable, int l_m, int l_s)
 {	
-	int placeCounter = 1000;
+	int placeCounter = 0;
 
-	char** labels; int l = -1;
-	for (int i = 0; i < numberOfStrings; i++)
-		labels[i] = (char*) calloc(MAXCHAR, sizeof(char));
+	int l = -1;
+	char* labels[STRING];// = (char**)calloc(1, sizeof(char*));
+	/*for (int i = 0; i < numberOfStrings; i++)
+		labels[i] = (char*) calloc(MAXCHAR, sizeof(char));*/
 
-	char** names; int n = -1;
-	for (int i = 0; i < numberOfStrings; i++)
-		names[i] = (char*) calloc(MAXCHAR, sizeof(char));
+	//int n = -1;
+	//char* names[STRING];// = (char**)calloc(1, sizeof(char*));
+	/*for (int i = 0; i < numberOfStrings; i++)
+		names[i] = (char*) calloc(MAXCHAR, sizeof(char));*/
 
 	for (int i = 0; i < numberOfStrings; i++)
 	{
@@ -20,57 +22,67 @@ int* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registe
 		for (int k = 0; k < 5; k++)
 		{
 			if (strlen(parsedStrings[i][k]) != 0)
-			{
+			{	
 				switch (k)
 				{
 				case 0: // метка
-					/* если метки нет в таблице, заносим её туда и назначаем текущий адресс размещений */
-					if (! isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
+					/* если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений */
+					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
 					{
-						strcpy(labels[++l], parsedStrings[i][0]);
-						Result *result = hashTable((char (*)[STRING])labels, l + 1, 1, 0);
-						DataRecord *labelsTable = result->Table;
-						int l_m = result->Data[0];
-						int l_s = result->Data[1];
-					}				
+						labels[++l] = (char*) calloc(strlen(parsedStrings[i][k]), sizeof(char));
+						strcpy(labels[l], parsedStrings[i][0]);
+						//printf("%s\n", labels[l]);
+						Result *result = hashTable((char(*)[STRING])labels, l + 1, -99999, 0); // (char (*)[STRING])
+						labelsTable = result->Table;
+						l_m = result->Data[0];
+						l_s = result->Data[1];
+						printf("%s\n", getKey(labelsTable, "start", l_m, l_s)->Data);
+						//printHashTable(result->Table, l_m);
+					}
 					modifyKey(labelsTable, parsedStrings[i][0], placeCounter, l_m, l_s);
 					break;
 
 				case 1: // оператор
 					if (!strcmp(parsedStrings[i][1], "start"))
 						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
+					break;
 
+				/*
 				case 3: // операнд 2
 					t = 3;
 					// без break, потому что действия аналогичны первому операнду
 
 				case 2: // операнд 1
-					/* если это не число и не регистр, то заносим строку в таблицу имён, проверив сначала, не метка ли это */
-					if (! (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57 && // не число от 0 до 9
-						   isKeyOf(registersTable, parsedStrings[i][t], r_m, r_s)))		   // и не регистр?
+					// если это не число и не регистр, то заносим строку в таблицу имён, проверив сначала, не метка ли это
+					if (! (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57 || // не число от 0 до 9
+						   isKeyOf(registersTable, parsedStrings[i][t], r_m, r_s)))	 	   // и не регистр?
 					{
 						if (! isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // не метка?
 						{
-							if (! isKeyOf(namesTable, parsedStrings[i][t], n_m, n_s)) // нет в таблице имён?
-							{
-								strcpy(names[++n], parsedStrings[i][t]);
-								Result *result = hashTable((char(*)[STRING])names, l + 1, 1, 0);
-								DataRecord *labelsTable = result->Table;
-								int n_m = result->Data[0];
-								int n_s = result->Data[1];
-							}
+							printf("2.1) %d  %s\n", strlen(parsedStrings[i][t]), parsedStrings[i][t]);
+							labels[++l] = (char*)calloc(strlen(parsedStrings[i][k]), sizeof(char));
+							strcpy(labels[l], parsedStrings[i][0]);
+							Result *result = hashTable(labels, l + 1, -99999, 0); // (char (*)[STRING])
+							labelsTable = result->Table;
+							l_m = result->Data[0];
+							l_s = result->Data[1];
+						}
+						else
+						{	
+							int data = getKey(labelsTable, parsedStrings[i][t], l_m, l_s)->Data;
+							if (data > 0)
+								modifyKey(labelsTable, parsedStrings[i][t], data, l_m, l_s);
 						}
 					}
+				*/
 				}
 			}
 		}
-
 		placeCounter++;
 	}
 
-	static int result[4]; //{ l_m, l_s, n_m, n_s };
+	static int result[2];
 	result[0] = l_m; result[1] = l_s;
-	result[2] = n_m; result[3] = n_s;
 	return result;
 }
 
@@ -92,16 +104,11 @@ int main(int argc, char *argv[])
 	int reg_m = result->Data[0];
 	int reg_shift = result->Data[1];
 
-	char t[][STRING] = { "", "a" };
-	result = hashTable(t, 2, 1, 0);
-	DataRecord *labelsTable = result->Table;
-	int lab_m = result->Data[0];
-	int lab_shift = result->Data[1];
-
-	result = hashTable(t, 2, 1, 0);
-	DataRecord *namesTable = result->Table;
-	int nam_m = result->Data[0];
-	int nam_shift = result->Data[1];
+	char t[][STRING] = { "b", "a" };
+	Result *res1 = hashTable(t, 2, -99999, 0);
+	DataRecord *labelsTable = res1->Table;
+	int lab_m = res1->Data[0];
+	int lab_shift = res1->Data[1];
 
 
 	printf("\n\nWorking...\n\n");
@@ -127,22 +134,23 @@ int main(int argc, char *argv[])
 			//printf("Оригинал: '%s'\n", rmSymbs(str, "\n"));
 			parsedStrings[numberOfStrings - 1] = (char**) calloc(6, sizeof(char*));
 			parsedStrings[numberOfStrings - 1] = res;
+			//printParsedString(parsedStrings[numberOfStrings - 1]);
 		}
 	}
 	fclose(fp);
-
+				
+	//printHashTable(registersTable, reg_m);
 	printf("Первый проход... \n\n");
 
-	int *res = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift, labelsTable, lab_m, lab_shift, namesTable, nam_m, nam_shift);
+	int *res = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift, labelsTable, lab_m, lab_shift);
 	lab_m = res[0];
 	lab_shift = res[1];
-	nam_m = res[0];
-	nam_shift = res[1];
 
 	puts("");
-	printHashTable(labelsTable, lab_m);
+	//printf("%d  %d  %d  %d\n", lab_m, lab_shift);
+	//printHashTable(labelsTable, lab_m);
 	puts("");
-	printHashTable(namesTable, nam_m);
+	//printHashTable(namesTable, nam_m);
 
 	return 0;
 }

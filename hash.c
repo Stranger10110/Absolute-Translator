@@ -33,36 +33,6 @@ int Hash(char *key, int m, int shift)
 }
 
 
-int insertKey(DataRecord* hashTable, char *key, int h, int code, int m)
-{	
-	int count = 0;
-	int collision = 0;
-	if (!hashTable[h].key)
-		{
-			hashTable[h].key = (char*) calloc(STRING, sizeof(char));
-			if (hashTable[h].key)
-				strcpy(hashTable[h].key, key);
-			hashTable[h].Data = code;
-		}
-		else
-		{	
-			if (++count > m) return 999;
-			collision++;
-			
-			if (h == m - 1) h = -1;
-			while (hashTable[++h].key)
-				if (h == m - 1) h = -1;
-
-			hashTable[h].key = (char*) calloc(STRING, sizeof(char));
-			if (hashTable[h].key)
-				strcpy(hashTable[h].key, key);
-			hashTable[h].Data = code;
-		}
-	
-	return collision;
-}
-
-
 DataRecord* getKey(DataRecord *hashTable, char* key, int m, int shift)
 {
 	int count = 0;
@@ -185,6 +155,36 @@ void printHashTable(DataRecord* hashTable, int m)
 }
 
 
+int insertKey(DataRecord* hashTable, char *key, int h, int code, int m)
+{
+	int count = 0;
+	int collision = 0;
+	if (!hashTable[h].key)
+	{
+		hashTable[h].key = (char*)calloc(strlen(key), sizeof(char));
+		if (hashTable[h].key)
+			strcpy(hashTable[h].key, key);
+		hashTable[h].Data = code;
+	}
+	else
+	{
+		if (++count > m) return 999;
+		collision++;
+
+		if (h == m - 1) h = -1;
+		while (hashTable[++h].key)
+			if (h == m - 1) h = -1;
+
+		hashTable[h].key = (char*)calloc(strlen(key), sizeof(char));
+		if (hashTable[h].key)
+			strcpy(hashTable[h].key, key);
+		hashTable[h].Data = code;
+	}
+
+	return collision;
+}
+
+
 DataRecord* initHashTable(char words[][STRING], int num, int m, int shift, int data, int *colls)
 {
 	DataRecord *hashTable = (DataRecord*) calloc(m, sizeof(DataRecord));
@@ -223,7 +223,7 @@ Result* hashTable(char words[][STRING], int num, int data, int print)
 				if (print)
 					printf("размер = %d, коллизии = %d\n", simpleNumbers[k], collisions);
 
-				Result *res = (Result*)calloc(1, sizeof(Result));
+				Result *res = (Result*) calloc(1, sizeof(Result));
 				res->Table = (DataRecord*)calloc(1, sizeof(DataRecord));
 				res->Table = commandsTable;
 				res->Data[0] = simpleNumbers[k];

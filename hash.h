@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STRING 7
+#define STRING 50
 #define M 73 // размер хеш таблицы
 #define N 32
 #define WORD 4294967296 // размер машинного слова (2^32 (4 байта))

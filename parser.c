@@ -112,7 +112,7 @@ int parseString(char *string, char* res[])
 		default:
 			temp[c++] = string[i]; // записываем каждый "значащий" символ во временный буфер
 
-			if (((string[i+1] == ' ') || (i+1 == length-1) || (string[i+1] == ',') ))
+			if (((string[i+1] == ' ') || (string[i + 1] == '	') || (string[i+1] == ',') ||  (i + 1 == length - 1)))
 			{	
 				if (strlen(res[1]) == 0)
 				{
@@ -154,6 +154,9 @@ void printParsedString(char* res[])
 	printf("%s'%s' | ", "Операнд_1: ", res[i++]);
 	printf("%s'%s' | ", "Операнд_2: ", res[i++]);
 	printf("%s'%s'\n\n\n", "Комментарий: ", res[i]);
+	/*for (i = 0; i < 5; i++)
+		printf("'%s'  ", res[i]);
+	puts("\n");*/
 }
 
 int main_3(int argc, char *argv[])
@@ -180,10 +183,10 @@ int main_3(int argc, char *argv[])
 			printf("Оригинал: '%s'\n", rmSymbs(str, "\n"));
 			printParsedString(res);
 		}
-		else
+		/*else
 		{
 			printf("Error! [%s]\n\n", rmSymbs(str, "\n"));
-		}
+		}*/
 		
 	}
 	fclose(fp);
