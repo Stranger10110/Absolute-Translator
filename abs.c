@@ -12,9 +12,6 @@ void firstPass(char** parsedStrings[6], int numberOfStrings)
 
 int main(int argc, char *argv[])
 {	
-	int *t = (int*)calloc(INIT_RESULTS, sizeof(int));
-
-
 	printf("Initialization...\n\n");
 
 	// Creating hash table of commands and their codes
