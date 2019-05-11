@@ -39,7 +39,7 @@ int parseString(char *string, char* res[])
 
 		case 2:
 		{
-			int error = 0;
+			/*int error = 0;
 			switch (string[0])
 			{
 				case ' ':
@@ -56,7 +56,7 @@ int parseString(char *string, char* res[])
 				for (int k = 0; k < 4; k++)
 				{
 					strcpy(res[k], "ERROR");
-				}
+				}*/
 			return 0;
 		}
 	}

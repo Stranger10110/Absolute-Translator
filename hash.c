@@ -168,14 +168,14 @@ DataRecord* initHashTable(char words[][STRING], int num, int m, int shift, int d
 Result* hashTable(char words[][STRING], int data)
 {
 	int collisions, m = 43;
-	int simpleNumbers[989] = SIMPLE_NUMBERS, k = -1;
+	int simpleNumbers[988] = SIMPLE_NUMBERS, k = -1;
 
 	for (int k = 0; k <= 989; k++)
 	{
 		for (int shift = 1; shift <= 31; shift++)
 		{
 			DataRecord* commandsTable = initHashTable(words, NUMBER_OF_COMMANDS, simpleNumbers[k], ++shift, data, &collisions);
-			if (collisions <= 2)
+			if (collisions <= 3)
 			{
 				printf("размер = %d, коллизии = %d\n", simpleNumbers[k], collisions);
 
