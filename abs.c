@@ -2,11 +2,27 @@
 #include "hash.h"
 #include "abs.h"
 
-void firstPass(char** parsedStrings[6], int numberOfStrings)
+void firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *labelsTable)
 {	
+	int placeCounter = 1000;
+
 	for (int i = 0; i < numberOfStrings; i++)
-	{
-		// ...  your code here ...
+	{	
+		for (int k = 0; k < 5; k++)
+		{
+			if (strlen(parsedStrings[i][k]) != 0)
+				switch (k)
+				{
+				case 0: // метка
+					break;
+
+				case 2: // операнд 1
+					break;
+
+				case 3: // операнд 2
+					break;
+				}
+		}
 	}
 }
 
@@ -17,7 +33,7 @@ int main(int argc, char *argv[])
 	// Creating hash table of commands and their codes
 	printf("Хеш таблица команд:\n");
 	char commands[NUMBER_OF_COMMANDS][STRING] = COMMANDS;
-	Result *result = hashTable(commands, 1);
+	Result *result = hashTable(commands, NUMBER_OF_COMMANDS, 1);
 	DataRecord *commandsTable = result->Table;
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
@@ -59,7 +75,9 @@ int main(int argc, char *argv[])
 
 	printf("\nFirst pass: \n\n");
 
-	firstPass(parsedStrings, numberOfStrings);
+	char *t[1] = {""};
+	DataRecord *labelsTable = hashTable(t, 1, 1);
+	firstPass(parsedStrings, numberOfStrings, labelsTable);
 
 	fclose(fp);
 	return 0;

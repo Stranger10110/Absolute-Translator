@@ -27,11 +27,13 @@ int insertKey(DataRecord* hashTable, char *key, int h, int code, int m);
 
 int getKey(DataRecord *hashTable, char* key, int m, int shift);
 
-int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift);
+int checkKey(DataRecord *hashTable, char* key, int m, int shift);
+
+int modifyKey(DataRecord *hashTable, char* key, int data[5], int m, int shift);
 
 void printHashTable(DataRecord* hashTable, int m);
 
-DataRecord* initHashTable(char word[][STRING], int num, int m, int shift, int data, int *collisions);
+DataRecord* initHashTable(char word[][STRING], int num, int m, int shift, int data[5], int *collisions);
 
-Result* hashTable(char words[][STRING], int data);
+Result* hashTable(char words[][STRING], int num, int data[5]);
 
