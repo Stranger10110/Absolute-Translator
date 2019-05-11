@@ -63,7 +63,7 @@ int insertKey(DataRecord* hashTable, char *key, int h, int code, int m)
 }
 
 
-int getKey(DataRecord *hashTable, char* key, int m, int shift)
+DataRecord* getKey(DataRecord *hashTable, char* key, int m, int shift)
 {
 	int count = 0;
 	int h = Hash(key, m, shift);
@@ -74,7 +74,7 @@ int getKey(DataRecord *hashTable, char* key, int m, int shift)
 		return 0;
 	}
 	else if (!strcmp(hashTable[h].key, key))
-		return hashTable[h].Data;
+		return &hashTable[h];
 	else
 	{
 		if (h == m - 1) h = -1;
@@ -92,15 +92,15 @@ int getKey(DataRecord *hashTable, char* key, int m, int shift)
 				return 0;
 			}
 			else if (!strcmp(hashTable[h].key, key))
-				return hashTable[h].Data;
+				return &hashTable[h];
 
 			if (h == m - 1) h = -1;
 		}
-		return hashTable[h].Data;
+		return &hashTable[h];
 	}
 }
 
-int checkKey(DataRecord *hashTable, char* key, int m, int shift)
+int isKeyOf(DataRecord *hashTable, char* key, int m, int shift)
 {
 	int count = 0;
 	int h = Hash(key, m, shift);
@@ -187,7 +187,6 @@ void printHashTable(DataRecord* hashTable, int m)
 
 DataRecord* initHashTable(char words[][STRING], int num, int m, int shift, int data, int *colls)
 {
-	printf("%d  %d  %d\n", m, shift, colls);
 	DataRecord *hashTable = (DataRecord*) calloc(m, sizeof(DataRecord));
 	if (hashTable)
 	{
@@ -209,20 +208,20 @@ DataRecord* initHashTable(char words[][STRING], int num, int m, int shift, int d
 	return hashTable;
 }
 
-Result* hashTable(char words[][STRING], int num, int data)
+Result* hashTable(char words[][STRING], int num, int data, int print)
 {
 	int collisions, m = 43;
 	int simpleNumbers[988] = SIMPLE_NUMBERS, k = -1;
 
-	for (int k = 0; k <= 989; k++)
+	for (int k = 0; k <= 988; k++)
 	{
 		for (int shift = 1; shift <= 31; shift++)
 		{
 			DataRecord* commandsTable = initHashTable(words, num, simpleNumbers[k], ++shift, data, &collisions);
-			//printf("%d  %d  %d\n", simpleNumbers[k], shift, collisions);
 			if (collisions <= 3)
 			{
-				printf("размер = %d, коллизии = %d\n", simpleNumbers[k], collisions);
+				if (print)
+					printf("размер = %d, коллизии = %d\n", simpleNumbers[k], collisions);
 
 				Result *res = (Result*)calloc(1, sizeof(Result));
 				res->Table = (DataRecord*)calloc(1, sizeof(DataRecord));
