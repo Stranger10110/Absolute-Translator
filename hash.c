@@ -180,7 +180,7 @@ int insertKey(DataRecord* hashTable, char *key, int h, int code, int m)
 }
 
 
-DataRecord* initHashTable(char **words, int num, int m, int shift, int data, int *colls)
+DataRecord* initHashTable(char **words, int num, int m, int shift, int data[], int *colls)
 {
 	DataRecord *hashTable = (DataRecord*) calloc(m, sizeof(DataRecord));
 	if (hashTable)
@@ -198,14 +198,14 @@ DataRecord* initHashTable(char **words, int num, int m, int shift, int data, int
 		int hash = Hash(words[i], m, shift);
 		//puts(words[i]);
 		//printf("hash = %d\n\n", hash);
-		collisions += insertKey(hashTable, words[i], hash, data++, m);
+		collisions += insertKey(hashTable, words[i], hash, data[i], m);
 	}
 
 	*colls = collisions;
 	return hashTable;
 }
 
-Result* hashTable(char **words, int num, int data, int print)
+Result* hashTable(char **words, int num, int data[], int print)
 {
 	int collisions;
 	int simpleNumbers[1000] = SIMPLE_NUMBERS;

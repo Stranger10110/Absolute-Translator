@@ -2,23 +2,16 @@
 #include "hash.h"
 #include "abs.h"
 
-int* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registersTable, int r_m, int r_s, DataRecord *labelsTable, int l_m, int l_s)
+Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registersTable, int r_m, int r_s, DataRecord *labelsTable, int l_m, int l_s)
 {	
 	int placeCounter = 0;
 
 	int l = -1;
 	char** labels = (char**) calloc(numberOfStrings, sizeof(char*));
-	/*for (int i = 0; i < numberOfStrings; i++)
-		labels[i] = (char*) calloc(MAXCHAR, sizeof(char));*/
-
-	//int n = -1;
-	//char* names[STRING];// = (char**)calloc(1, sizeof(char*));
-	/*for (int i = 0; i < numberOfStrings; i++)
-		names[i] = (char*) calloc(MAXCHAR, sizeof(char));*/
+	int *labelsData = (int*) calloc(numberOfStrings, sizeof(int));
 
 	for (int i = 0; i < numberOfStrings; i++)
 	{
-		int t = 2; // по умолчанию только один операнд
 		for (int k = 0; k < 5; k++)
 		{
 			if (strlen(parsedStrings[i][k]) != 0)
@@ -29,22 +22,11 @@ int* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registe
 					/* если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений */
 					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
 					{	
-						free(labels[0]);
-						labels[0] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
-						strcpy(labels[0], parsedStrings[i][0]);
-						
-						//printf("%s\n", labels[l]);
-						Result *result = reHashTable(labelsTable, l_m, labels, 1, -99999, 0); // (char (*)[STRING])
-						//free(labelsTable);
-
-						labelsTable = result->Table;
-						l_m = result->Data[0];
-						l_s = result->Data[1];
-						//printHashTable(result->Table, l_m);
+						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
+						strcpy(labels[l], parsedStrings[i][0]);
+						labelsData[l] = placeCounter;
+						//printf("%s - %d\n", labels[l], labelsData[l]);
 					}
-					printHashTable(labelsTable, l_m);
-					modifyKey(labelsTable, parsedStrings[i][0], placeCounter, l_m, l_s);
-					printHashTable(labelsTable, l_m);
 					break;
 
 				case 1: // оператор
@@ -86,8 +68,7 @@ int* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registe
 		placeCounter++;
 	}
 
-	static int result[2];
-	result[0] = l_m; result[1] = l_s;
+	Result *result = hashTable(labels, l + 1, labelsData, 0); // (char (*)[STRING])
 	return result;
 }
 
@@ -96,36 +77,42 @@ int main(int argc, char *argv[])
 	printf("Initialization...\n\n");
 
 	char c[NUMBER_OF_COMMANDS][STRING] = COMMANDS;
-	char** commands = (char**)calloc(NUMBER_OF_COMMANDS, sizeof(char*));
+	char** commands = (char**) calloc(NUMBER_OF_COMMANDS, sizeof(char*));
+	int *commandsData = (int*) calloc(NUMBER_OF_COMMANDS, sizeof(int)); int start = 13;
 	for (int i = 0; i < NUMBER_OF_COMMANDS; i++)
 	{
 		commands[i] = (char*)calloc(STRING, sizeof(char));
+		commandsData[i] = start++;
 		strcpy(commands[i], c[i]);
 	}
 
 	char r[NUMBER_OF_REGISTERS][STRING] = REGISTERS;
-	char** registers = (char**)calloc(NUMBER_OF_REGISTERS, sizeof(char*));
+	char** registers = (char**) calloc(NUMBER_OF_REGISTERS, sizeof(char*));
+	int *registersData = (int*) calloc(NUMBER_OF_COMMANDS, sizeof(int)); start = 1;
 	for (int i = 0; i < NUMBER_OF_REGISTERS; i++)
 	{
 		registers[i] = (char*)calloc(STRING, sizeof(char));
+		registersData[i] = start++;
 		strcpy(registers[i], c[i]);
 	}
 	
 	printf("Хеш таблица команд:\n");
-	Result *result = hashTable(commands, NUMBER_OF_COMMANDS, 13, 1);
+	Result *result = hashTable(commands, NUMBER_OF_COMMANDS, commandsData, 1);
 	DataRecord *commandsTable = result->Table;
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
 
 	printf("\nХеш таблица регистров:\n");
-	result = hashTable(registers, NUMBER_OF_REGISTERS, 1, 1);
+	result = hashTable(registers, NUMBER_OF_REGISTERS, registersData, 1);
 	DataRecord *registersTable = result->Table;
 	int reg_m = result->Data[0];
 	int reg_shift = result->Data[1];
 
 	char** t = (char**) calloc(1, sizeof(char*));
 	t[0] = (char*)calloc(STRING, sizeof(char));
-	Result *res1 = hashTable(t, 1, -99999, 0);
+	int *tD = (int*) calloc(1, sizeof(int));
+	tD[0] = 0;
+	Result *res1 = hashTable(t, 1, tD, 0);
 	DataRecord *labelsTable = res1->Table;
 	int lab_m = res1->Data[0];
 	int lab_shift = res1->Data[1];
@@ -158,13 +145,15 @@ int main(int argc, char *argv[])
 		}
 	}
 	fclose(fp);
-				
+	
+	//printHashTable(commandsTable, com_m);
 	//printHashTable(registersTable, reg_m);
 	printf("Первый проход... \n\n");
 
-	int *res = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift, labelsTable, lab_m, lab_shift);
-	lab_m = res[0];
-	lab_shift = res[1];
+	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift, labelsTable, lab_m, lab_shift);
+	labelsTable = result->Table;
+	lab_m = result->Data[0];
+	lab_shift = result->Data[1];
 
 	puts("");
 	//printf("%d  %d  %d  %d\n", lab_m, lab_shift);

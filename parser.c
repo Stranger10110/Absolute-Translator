@@ -143,7 +143,15 @@ int parseString(char *string, char* res[])
 		}
 	}
 
-	return 1;
+	c = 0;
+	for (int i = 0; i < 5; i++)
+		if (strlen(res[i]) == 0)
+			++c;
+
+	if (c != 5)
+		return 1;
+	else
+		return 0;
 }
 
 void printParsedString(char* res[])

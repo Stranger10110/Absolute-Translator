@@ -34,9 +34,9 @@ int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift);
 
 void printHashTable(DataRecord* hashTable, int m);
 
-DataRecord* initHashTable(char **words, int num, int m, int shift, int data, int *collisions);
+DataRecord* initHashTable(char **words, int num, int m, int shift, int data[], int *colls);
 
-Result* hashTable(char **words, int num, int data, int print);
+Result* hashTable(char **words, int num, int data[], int print);
 
 DataRecord* reallocHashTable(DataRecord* hashTable, char **words, int num, int m, int shift, int data, int *colls);
 
