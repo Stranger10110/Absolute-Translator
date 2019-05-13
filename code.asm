@@ -5,7 +5,7 @@ m:  	mov ax, number
     	dec number
     	mov bx, number
     	mul bx
-    
+
     	dec number
     	mul result
     	mov result, ax
