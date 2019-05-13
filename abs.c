@@ -15,7 +15,7 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 		for (int k = 0; k < 5; k++)
 		{
 			if (strlen(parsedStrings[i][k]) != 0)
-			{	
+			{
 				switch (k)
 				{
 				case 0: // метка
@@ -86,14 +86,24 @@ int main(int argc, char *argv[])
 		strcpy(commands[i], c[i]);
 	}
 
+	char d[NUMBER_OF_DIRECTIVES][STRING] = DIRECTIVES;
+	char** directives = (char**) calloc(NUMBER_OF_DIRECTIVES, sizeof(char*));
+	int *directivesData = (int*) calloc(NUMBER_OF_DIRECTIVES, sizeof(int)); start = 43;
+	for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++)
+	{
+		directives[i] = (char*)calloc(STRING, sizeof(char));
+		directivesData[i] = start++;
+		strcpy(directives[i], d[i]);
+	}
+
 	char r[NUMBER_OF_REGISTERS][STRING] = REGISTERS;
 	char** registers = (char**) calloc(NUMBER_OF_REGISTERS, sizeof(char*));
-	int *registersData = (int*) calloc(NUMBER_OF_COMMANDS, sizeof(int)); start = 1;
+	int *registersData = (int*) calloc(NUMBER_OF_REGISTERS, sizeof(int)); start = 1;
 	for (int i = 0; i < NUMBER_OF_REGISTERS; i++)
 	{
 		registers[i] = (char*)calloc(STRING, sizeof(char));
 		registersData[i] = start++;
-		strcpy(registers[i], c[i]);
+		strcpy(registers[i], r[i]);
 	}
 	
 	printf("Хеш таблица команд:\n");
@@ -101,6 +111,12 @@ int main(int argc, char *argv[])
 	DataRecord *commandsTable = result->Table;
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
+
+	printf("\nХеш таблица директив:\n");
+	result = hashTable(directives, NUMBER_OF_DIRECTIVES, directivesData, 1);
+	DataRecord *directivesTable = result->Table;
+	int dir_m = result->Data[0];
+	int dir_shift = result->Data[1];
 
 	printf("\nХеш таблица регистров:\n");
 	result = hashTable(registers, NUMBER_OF_REGISTERS, registersData, 1);
@@ -144,15 +160,10 @@ int main(int argc, char *argv[])
 			parsedStrings[numberOfStrings - 1] = res;
 			//printParsedString(parsedStrings[numberOfStrings - 1]);
 		}
-		else
-		{
-			if (!strcmp(res[0], "ERROR"))
-				printf("Error in line #%d ('%s')!\n", numberOfStrings, rmSymbs(str, "\n"));
-		}
 	}
 	fclose(fp);
 	
-	//printHashTable(commandsTable, com_m);
+	printHashTable(commandsTable, com_m);
 	//printHashTable(registersTable, reg_m);
 	printf("Первый проход... \n\n");
 
