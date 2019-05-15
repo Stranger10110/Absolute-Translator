@@ -13,19 +13,18 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 	for (int i = 0; i < numberOfStrings; i++)
 	{
 		for (int k = 0; k < 5; k++)
-		{
+		{	
 			if (strlen(parsedStrings[i][k]) != 0)
-			{	
+			{
 				switch (k)
 				{
 				case 0: // метка
 					/* если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений */
 					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
 					{	
-						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
+						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]) + 1, sizeof(char));
 						strcpy(labels[l], parsedStrings[i][0]);
 						labelsData[l] = placeCounter;
-						//printf("%s - %d\n", labels[l], labelsData[l]);
 					}
 					break;
 
@@ -33,7 +32,7 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 					if (!strcmp(parsedStrings[i][1], "start"))
 						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
 					break;
-
+				}
 				/*
 				case 3: // операнд 2
 					t = 3;
@@ -62,7 +61,6 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 						}
 					}
 				*/
-				}
 			}
 		}
 		placeCounter++;
@@ -86,14 +84,24 @@ int main(int argc, char *argv[])
 		strcpy(commands[i], c[i]);
 	}
 
+	char d[NUMBER_OF_DIRECTIVES][STRING] = DIRECTIVES;
+	char** directives = (char**) calloc(NUMBER_OF_DIRECTIVES, sizeof(char*));
+	int *directivesData = (int*) calloc(NUMBER_OF_DIRECTIVES, sizeof(int)); start = 43;
+	for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++)
+	{
+		directives[i] = (char*)calloc(STRING, sizeof(char));
+		directivesData[i] = start++;
+		strcpy(directives[i], d[i]);
+	}
+
 	char r[NUMBER_OF_REGISTERS][STRING] = REGISTERS;
 	char** registers = (char**) calloc(NUMBER_OF_REGISTERS, sizeof(char*));
-	int *registersData = (int*) calloc(NUMBER_OF_COMMANDS, sizeof(int)); start = 1;
+	int *registersData = (int*) calloc(NUMBER_OF_REGISTERS, sizeof(int)); start = 1;
 	for (int i = 0; i < NUMBER_OF_REGISTERS; i++)
 	{
 		registers[i] = (char*)calloc(STRING, sizeof(char));
 		registersData[i] = start++;
-		strcpy(registers[i], c[i]);
+		strcpy(registers[i], r[i]);
 	}
 	
 	printf("Хеш таблица команд:\n");
@@ -101,6 +109,12 @@ int main(int argc, char *argv[])
 	DataRecord *commandsTable = result->Table;
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
+
+	printf("\nХеш таблица директив:\n");
+	result = hashTable(directives, NUMBER_OF_DIRECTIVES, directivesData, 1);
+	DataRecord *directivesTable = result->Table;
+	int dir_m = result->Data[0];
+	int dir_shift = result->Data[1];
 
 	printf("\nХеш таблица регистров:\n");
 	result = hashTable(registers, NUMBER_OF_REGISTERS, registersData, 1);
@@ -112,10 +126,10 @@ int main(int argc, char *argv[])
 	t[0] = (char*)calloc(STRING, sizeof(char));
 	int *tD = (int*) calloc(1, sizeof(int));
 	tD[0] = 0;
-	Result *res1 = hashTable(t, 1, tD, 0);
-	DataRecord *labelsTable = res1->Table;
-	int lab_m = res1->Data[0];
-	int lab_shift = res1->Data[1];
+	result = hashTable(t, 1, tD, 0);
+	DataRecord *labelsTable = result->Table;
+	int lab_m = result->Data[0];
+	int lab_shift = result->Data[1];
 
 
 	printf("\n\nWorking...\n\n");
@@ -124,7 +138,8 @@ int main(int argc, char *argv[])
 	FILE *fp = fopen(argv[1], "r");
 	char str[MAXCHAR];
 	int numberOfStrings = 0;
-	char** parsedStrings[6];
+	static char** parsedStrings[6];
+	//parsedStrings = (char***) calloc(1, sizeof(char**));
 	
 	//int n = -1;
 	while (fgets(str, MAXCHAR, fp) != NULL)
@@ -143,11 +158,6 @@ int main(int argc, char *argv[])
 			parsedStrings[numberOfStrings - 1] = (char**) calloc(6, sizeof(char*));
 			parsedStrings[numberOfStrings - 1] = res;
 			//printParsedString(parsedStrings[numberOfStrings - 1]);
-		}
-		else
-		{
-			if (!strcmp(res[0], "ERROR"))
-				printf("Error in line #%d ('%s')!\n", numberOfStrings, rmSymbs(str, "\n"));
 		}
 	}
 	fclose(fp);
