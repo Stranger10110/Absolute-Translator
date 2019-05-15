@@ -13,7 +13,7 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 	for (int i = 0; i < numberOfStrings; i++)
 	{
 		for (int k = 0; k < 5; k++)
-		{
+		{	
 			if (strlen(parsedStrings[i][k]) != 0)
 			{
 				switch (k)
@@ -22,10 +22,9 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 					/* если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений */
 					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
 					{	
-						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
+						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]) + 1, sizeof(char));
 						strcpy(labels[l], parsedStrings[i][0]);
 						labelsData[l] = placeCounter;
-						//printf("%s - %d\n", labels[l], labelsData[l]);
 					}
 					break;
 
@@ -33,7 +32,7 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 					if (!strcmp(parsedStrings[i][1], "start"))
 						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
 					break;
-
+				}
 				/*
 				case 3: // операнд 2
 					t = 3;
@@ -62,7 +61,6 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 						}
 					}
 				*/
-				}
 			}
 		}
 		placeCounter++;
@@ -128,10 +126,10 @@ int main(int argc, char *argv[])
 	t[0] = (char*)calloc(STRING, sizeof(char));
 	int *tD = (int*) calloc(1, sizeof(int));
 	tD[0] = 0;
-	Result *res1 = hashTable(t, 1, tD, 0);
-	DataRecord *labelsTable = res1->Table;
-	int lab_m = res1->Data[0];
-	int lab_shift = res1->Data[1];
+	result = hashTable(t, 1, tD, 0);
+	DataRecord *labelsTable = result->Table;
+	int lab_m = result->Data[0];
+	int lab_shift = result->Data[1];
 
 
 	printf("\n\nWorking...\n\n");
@@ -140,7 +138,8 @@ int main(int argc, char *argv[])
 	FILE *fp = fopen(argv[1], "r");
 	char str[MAXCHAR];
 	int numberOfStrings = 0;
-	char** parsedStrings[6];
+	static char** parsedStrings[6];
+	//parsedStrings = (char***) calloc(1, sizeof(char**));
 	
 	//int n = -1;
 	while (fgets(str, MAXCHAR, fp) != NULL)
@@ -163,7 +162,7 @@ int main(int argc, char *argv[])
 	}
 	fclose(fp);
 	
-	printHashTable(commandsTable, com_m);
+	//printHashTable(commandsTable, com_m);
 	//printHashTable(registersTable, reg_m);
 	printf("Первый проход... \n\n");
 
