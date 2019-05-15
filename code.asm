@@ -1,21 +1,21 @@
-	START 1000
+        START 1000
 
 start:
-m:  	mov ax, number
-    	dec number
-    	mov bx, number
-    	mul bx
-    
-    	dec number
-    	mul result
-    	mov result, ax
+m:      mov ax, number
+        dec number
+        mov bx, number
+        mul bx
 
-    	cmp number, 0
-    	jne m
+        dec number
+        mul result
+        mov result, ax
 
-    	mov result, ax
+        cmp number, 0
+        jne m
 
-number:	WORD	 10
-result:	RESW	 1
+        mov result, ax
 
-	END start
+number: WORD     10
+result: RESW     1
+
+        END start

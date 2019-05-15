@@ -6,3 +6,7 @@
 CppProperties\.json
 
 *.swp
+
+*.bin
+
+*.ipch
