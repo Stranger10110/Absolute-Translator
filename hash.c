@@ -138,9 +138,9 @@ int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift)
 }
 
 
-void printHashTable(DataRecord* hashTable, int m)
+void printHashTable(DataRecord* hashTable, int m, char *str)
 {
-	puts("Hash table:");
+	printf("Hash table (%s):\n", str);
 	for (int i = 0; i < m; i++)
 	{	
 		if (hashTable[i].key)

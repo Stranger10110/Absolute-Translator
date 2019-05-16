@@ -4,9 +4,10 @@
 
 
 Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regTab, int r_m, int r_s,
-				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s)
+				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s, int *counter)
 {	
 	int placeCounter = PLACE_COUNTER_MIN;
+	*counter = placeCounter;
 
 	int l = -1;
 	char** labels = (char**) calloc(numberOfStrings, sizeof(char*));
@@ -19,75 +20,74 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 		for (int k = 0; k < 4; k++)
 		{	
 			if (strlen(parsedStrings[i][k]) != 0)
-			{	
-				switch (k)
+			switch (k)
+			{
+			case 0: // метка
+				/*
+					Если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений
+				*/
+				if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
 				{
-				case 0: // метка
-					/*
-						Если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений
-					*/
-					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
-					{	
-						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
-						strcpy(labels[l], parsedStrings[i][0]);
-						labelsData[l] = placeCounter;
-						result = hashTable(labels, l + 1, labelsData, 0);
-						labelsTable = result->Table;
-						l_m = result->Data[0];
-						l_s = result->Data[1];
-					}
-					break;
+					labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
+					strcpy(labels[l], parsedStrings[i][0]);
+					labelsData[l] = placeCounter;
+					
+					result = hashTable(labels, l + 1, labelsData, 0);
+					labelsTable = result->Table;
+					l_m = result->Data[0];
+					l_s = result->Data[1];
+				}
+				break;
 
-				case 1: // оператор
-					if (!strcmp(parsedStrings[i][1], "start"))
-					{
-						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
-						if (placeCounter < PLACE_COUNTER_MIN)
-							placeCounter = PLACE_COUNTER_MIN;
-					}
-					else if (!strcmp(parsedStrings[i][1], "resb"))
-						placeCounter += atoi(parsedStrings[i][2]);
-					else if (!strcmp(parsedStrings[i][1], "resw"))
-						placeCounter += atoi(parsedStrings[i][2]) * W;
-					else if (!strcmp(parsedStrings[i][1], "byte"))
-						placeCounter += strlen(parsedStrings[i][2]);
-					else if (!strcmp(parsedStrings[i][1], "word"))
-						placeCounter += W;
-					else if (isKeyOf(comTab, parsedStrings[i][1], c_m, c_s))
-					{
-						placeCounter += COMMAND_SIZE;
+			case 1: // оператор
+				if (!strcmp(parsedStrings[i][1], "start"))
+				{
+					placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
+					if (placeCounter < PLACE_COUNTER_MIN)
+						placeCounter = PLACE_COUNTER_MIN;
+					*counter = placeCounter;
+				}
+				else if (!strcmp(parsedStrings[i][1], "resb"))
+					placeCounter += atoi(parsedStrings[i][2]);
+				else if (!strcmp(parsedStrings[i][1], "resw"))
+					placeCounter += atoi(parsedStrings[i][2]) * W;
+				else if (!strcmp(parsedStrings[i][1], "byte"))
+					placeCounter += strlen(parsedStrings[i][2]);
+				else if (!strcmp(parsedStrings[i][1], "word"))
+					placeCounter += W;
+				else if (isKeyOf(comTab, parsedStrings[i][1], c_m, c_s))
+				{
+					placeCounter += COMMAND_SIZE;
 
-						char str[STRING];
-						sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s));
-						strcpy(parsedStrings[i][1], str);
-					}
-					break;
-				
-				case 3: // операнд 2
-					t = 3;
-					// без break, потому что действия аналогичны первому операнду
+					char str[STRING];
+					sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s));
+					strcpy(parsedStrings[i][1], str);
+				}
+				break;
+			
+			case 3: // операнд 2
+				t = 3;
+				// без break, потому что действия аналогичны первому операнду
 
-				case 2: // операнд 1
-					/* 
-						Если это не число и не регистр, то заносим строку в таблицу меток, если её нет в таблице,
-						иначе заменяем её на адрес. Если это регистр, заменяем его на код.
-					*/
-					if (!((parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57) || // не число от 0 до 9
-						isKeyOf(regTab, parsedStrings[i][t], r_m, r_s)))	 	   		  // и не регистр?
-					{
-						if (isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
-						{
-							char str[STRING];
-							sprintf(str, "%d", getKey(labelsTable, parsedStrings[i][t], l_m, l_s));
-							strcpy(parsedStrings[i][t], str);
-						}						
-					}
-					else if (isKeyOf(regTab, parsedStrings[i][t], r_m, r_s))
+			case 2: // операнд 1
+				/* 
+					Если это не регистр, то заносим строку в таблицу меток, если её нет в таблице,
+					иначе заменяем её на адрес. Если это регистр, заменяем его на код.
+				*/
+				if (!isKeyOf(regTab, parsedStrings[i][t], r_m, r_s)) // не регистр?
+				{
+					if (isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
 					{
 						char str[STRING];
-						sprintf(str, "%d", getKey(regTab, parsedStrings[i][t], r_m, r_s));
+						sprintf(str, "%d", getKey(labelsTable, parsedStrings[i][t], l_m, l_s));
 						strcpy(parsedStrings[i][t], str);
-					}
+					}						
+				}
+				else// if (isKeyOf(regTab, parsedStrings[i][t], r_m, r_s))
+				{
+					char str[STRING];
+					sprintf(str, "%d", getKey(regTab, parsedStrings[i][t], r_m, r_s));
+					strcpy(parsedStrings[i][t], str);
 				}
 			}
 		}
@@ -97,6 +97,104 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 	return result;
 }
 
+
+int secondPass(char** parsedStrings[6], int numberOfStrings,
+				DataRecord *regTab, int r_m, int r_s, DataRecord *comTab, int c_m, int c_s,
+				DataRecord *labTab, int l_m, int l_s, int counter)
+{	
+	int placeCounter = counter;
+
+	for (int i = 0; i < numberOfStrings; i++)
+	{	
+		/* Print address and object code */
+		int t = 2, place = 0;
+		for (int k = 1; k < 4; k++)
+		{	
+			if (strlen(parsedStrings[i][k]) != 0)
+			{
+				switch (k)
+				{
+				case 1: // оператор
+					if (!strcmp(parsedStrings[i][1], "resb"))
+					{	
+						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
+						printf("%d) %d: ", i + 1, placeCounter);
+						printf("%X\n", 0);
+						placeCounter += atoi(parsedStrings[i][2]);
+					}
+					else if (!strcmp(parsedStrings[i][1], "resw"))
+					{	
+						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
+						printf("%d) %d: ", i + 1, placeCounter);
+						printf("%0*X\n", atoi(parsedStrings[i][2]) * W, 0);
+						placeCounter += atoi(parsedStrings[i][2]) * W;
+					}
+					else if (!strcmp(parsedStrings[i][1], "byte"))
+					{	
+						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
+						printf("%d) %d: ", i + 1, placeCounter);
+						for (int g = 0; g < strlen(parsedStrings[i][2]); g++)
+							if (parsedStrings[i][2][g] != "'"[0] &&
+								parsedStrings[i][2][g] != '"')
+								printf("%c\n", parsedStrings[i][2][g]);
+						printf("\n");
+						placeCounter += strlen(parsedStrings[i][2]);
+					}
+					else if (!strcmp(parsedStrings[i][1], "word"))
+					{	
+						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
+						printf("%d) %d: ", i + 1, placeCounter);
+						printf("%0.4X\n", atoi(parsedStrings[i][2]));
+						placeCounter += W;
+					}
+					else if (!strcmp(parsedStrings[i][1], "start") || !strcmp(parsedStrings[i][1], "end"))
+						continue;
+					else
+					{	
+						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
+						printf("%d) %d: ", i + 1, placeCounter);
+						printf("%.1X ", atoi(parsedStrings[i][1]));
+						placeCounter += COMMAND_SIZE;
+						place = 1;
+					}
+					break;
+				
+				case 3: // первый операнд
+					t = 3;
+				
+				case 2: // второй операнд
+					if (isKeyOf(labTab, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
+					{
+						//char str[STRING];
+						//sprintf(str, "%d", );
+						if (place)
+							printf("%0.4X ", getKey(labTab, parsedStrings[i][t], l_m, l_s));
+						//strcpy(parsedStrings[i][t], str);
+					}
+					else if (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57)
+					{	
+						if (place)
+							printf("%0.4X ", atoi(parsedStrings[i][t]));
+					}
+					else
+					{
+						return i + 1; // error in string number...
+					}
+				}
+			}
+			/*else
+			{	
+				if (k == 2 || k == 3)
+					printf("%0*X", 8, 0);
+			}*/
+			
+		}
+
+		if (place) puts("");
+	}
+
+	return 0;
+}
 
 
 int main(int argc, char *argv[])
@@ -113,7 +211,7 @@ int main(int argc, char *argv[])
 		strcpy(commands[i], c[i]);
 	}
 
-	char d[NUMBER_OF_DIRECTIVES][STRING] = DIRECTIVES;
+	/*char d[NUMBER_OF_DIRECTIVES][STRING] = DIRECTIVES;
 	char** directives = (char**) calloc(NUMBER_OF_DIRECTIVES, sizeof(char*));
 	int *directivesData = (int*) calloc(NUMBER_OF_DIRECTIVES, sizeof(int)); start = 43;
 	for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++)
@@ -121,7 +219,7 @@ int main(int argc, char *argv[])
 		directives[i] = (char*)calloc(STRING, sizeof(char));
 		directivesData[i] = start++;
 		strcpy(directives[i], d[i]);
-	}
+	}*/
 
 	char r[NUMBER_OF_REGISTERS][STRING] = REGISTERS;
 	char** registers = (char**) calloc(NUMBER_OF_REGISTERS, sizeof(char*));
@@ -139,11 +237,11 @@ int main(int argc, char *argv[])
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
 
-	printf("\nХеш таблица директив:\n");
+	/*printf("\nХеш таблица директив:\n");
 	result = hashTable(directives, NUMBER_OF_DIRECTIVES, directivesData, 1);
 	DataRecord *directivesTable = result->Table;
 	int dir_m = result->Data[0];
-	int dir_shift = result->Data[1];
+	int dir_shift = result->Data[1];*/
 
 	printf("\nХеш таблица регистров:\n");
 	result = hashTable(registers, NUMBER_OF_REGISTERS, registersData, 1);
@@ -168,8 +266,10 @@ int main(int argc, char *argv[])
 	char str[MAXCHAR];
 	int numberOfStrings = 0;
 	static char** parsedStrings[6];
+	//char*** originalStrings = (char***) calloc(1, sizeof(char**));
 	
-	//int n = -1;
+	//int n = 0;
+	printf("Оригинал: \n\n");
 	while (fgets(str, MAXCHAR, fp) != NULL)
 	{
 		char** res = (char**) calloc(6, sizeof(char*));
@@ -182,33 +282,53 @@ int main(int argc, char *argv[])
 		if (parseString(str, res))
 		{
 			++numberOfStrings;
-			//printf("Оригинал: '%s'\n", rmSymbs(str, "\n"));
+			printf("%d) '%s'\n", numberOfStrings, rmSymbs(str, "\n"));
 			parsedStrings[numberOfStrings - 1] = (char**) calloc(6, sizeof(char*));
 			parsedStrings[numberOfStrings - 1] = res;
+
+			/*originalStrings[numberOfStrings - 1] = (char**) calloc(6, sizeof(char*));
+			for (int n = 0; n < 5; n++)
+			{
+				originalStrings[numberOfStrings-1][n] = (char*) calloc(strlen(res[n]), sizeof(char));
+				strcpy(originalStrings[numberOfStrings-1][n], res[n]);
+			}*/
+			
 			//printParsedString(parsedStrings[numberOfStrings - 1]);
 		}
 	}
 	fclose(fp);
+	puts("");
 	
 	//printHashTable(commandsTable, com_m);
 	//printHashTable(registersTable, reg_m);
-	printf("Первый проход... \n\n");
+	//printf("Первый проход... \n\n");
 
+	int placeCounterStart;
 	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
-					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift);
+					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift, &placeCounterStart);
 	labelsTable = result->Table;
 	lab_m = result->Data[0];
 	lab_shift = result->Data[1];
 
-	puts("");
+	//puts("");
 	//printf("%d  %d  %d  %d\n", lab_m, lab_shift);
-	printHashTable(labelsTable, lab_m);
-	puts("");
+	puts("Результат:\n");
 	//printHashTable(namesTable, nam_m);
 
-	for (int i = 0; i < numberOfStrings; i++)
+	/*for (int i = 0; i < numberOfStrings; i++)
 	{
 		printParsedString(parsedStrings[i]);
+	}*/
+
+	int res_code = secondPass(parsedStrings, numberOfStrings,
+			   	   	   registersTable, reg_m, reg_shift, commandsTable, com_m, com_shift,
+				   	   labelsTable, lab_m, lab_shift, placeCounterStart);
+	if (res_code)
+		printf("Error in string #%d - missing identifier!", res_code);
+	else
+	{	
+		puts("\n");
+		printHashTable(labelsTable, lab_m, "метки");
 	}
 
 	return 0;

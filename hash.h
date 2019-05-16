@@ -32,7 +32,7 @@ int isKeyOf(DataRecord *hashTable, char* key, int m, int shift);
 
 int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift);
 
-void printHashTable(DataRecord* hashTable, int m);
+void printHashTable(DataRecord* hashTable, int m, char *str);
 
 DataRecord* initHashTable(char **words, int num, int m, int shift, int data[], int *colls);
 
