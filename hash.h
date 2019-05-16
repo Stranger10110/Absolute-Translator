@@ -24,9 +24,9 @@ typedef struct {
 
 int Hash(char *key, int m, int shift);
 
-int insertKey(DataRecord* hashTable, char *key, int h, int code, int m);
+int insertKey(DataRecord* hashTable, char *key, int h, int code, int m, int shift);
 
-DataRecord* getKey(DataRecord *hashTable, char* key, int m, int shift);
+int getKey(DataRecord *hashTable, char* key, int m, int shift);
 
 int isKeyOf(DataRecord *hashTable, char* key, int m, int shift);
 
@@ -37,8 +37,4 @@ void printHashTable(DataRecord* hashTable, int m);
 DataRecord* initHashTable(char **words, int num, int m, int shift, int data[], int *colls);
 
 Result* hashTable(char **words, int num, int data[], int print);
-
-DataRecord* reallocHashTable(DataRecord* hashTable, char **words, int num, int m, int shift, int data, int *colls);
-
-Result* reHashTable(DataRecord* hashTable, int old_m, char **words, int num, int data, int print);
 
