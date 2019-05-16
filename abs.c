@@ -2,7 +2,8 @@
 #include "hash.h"
 #include "abs.h"
 
-Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *registersTable, int r_m, int r_s, DataRecord *labelsTable, int l_m, int l_s)
+Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regTab, int r_m, int r_s,
+				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s)
 {	
 	int placeCounter = 0;
 
@@ -11,15 +12,64 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 	int *labelsData = (int*) calloc(numberOfStrings, sizeof(int));
 
 	for (int i = 0; i < numberOfStrings; i++)
-	{
-		for (int k = 0; k < 5; k++)
+	{	
+		int t = 2;
+		for (int k = 0; k < 4; k++)
 		{	
 			if (strlen(parsedStrings[i][k]) != 0)
-			{
+			{	
 				switch (k)
 				{
+				case 1: // оператор
+					if (!strcmp(parsedStrings[i][1], "start"))
+						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
+					else if (!strcmp(parsedStrings[i][1], "resb") || !strcmp(parsedStrings[i][1], "byte"))
+						placeCounter += 1;
+					else if (!strcmp(parsedStrings[i][1], "resw") || !strcmp(parsedStrings[i][1], "word"))
+						placeCounter += W;
+					else if (isKeyOf(comTab, parsedStrings[i][1], c_m, c_s))
+					{
+						placeCounter += COMMAND_SIZE;
+
+						char str[STRING];
+						sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s));
+						strcpy(parsedStrings[i][1], str);
+					}
+					break;
+				
+				case 3: // операнд 2
+					t = 3;
+					// без break, потому что действия аналогичны первому операнду
+
+				case 2: // операнд 1
+					/* 
+						Если это не число и не регистр, то заносим строку в таблицу меток, если её нет в таблице,
+						иначе заменяем её на адрес. Если это регистр, заменяем его на код.
+					*/
+					if (!(parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57 || // не число от 0 до 9
+						isKeyOf(regTab, parsedStrings[i][t], r_m, r_s)))	 	   		  // и не регистр?
+					{
+						if (isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
+						{
+							char str[STRING];
+							sprintf(str, "%d", getKey(labelsTable, parsedStrings[i][t], l_m, l_s));
+							strcpy(parsedStrings[i][t], str);
+							break;
+						}
+						// иначе идём дальше и добавляем в таблицу
+					}
+					else if (isKeyOf(regTab, parsedStrings[i][t], r_m, r_s))
+					{
+						char str[STRING];
+						sprintf(str, "%d", getKey(regTab, parsedStrings[i][t], r_m, r_s));
+						strcpy(parsedStrings[i][t], str);
+						break;
+					}
+
 				case 0: // метка
-					/* если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений */
+					/*
+						Если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений
+					*/
 					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
 					{	
 						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]) + 1, sizeof(char));
@@ -27,46 +77,12 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regi
 						labelsData[l] = placeCounter;
 					}
 					break;
-
-				case 1: // оператор
-					if (!strcmp(parsedStrings[i][1], "start"))
-						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
-					break;
 				}
-				/*
-				case 3: // операнд 2
-					t = 3;
-					// без break, потому что действия аналогичны первому операнду
-
-				case 2: // операнд 1
-					// если это не число и не регистр, то заносим строку в таблицу имён, проверив сначала, не метка ли это
-					if (! (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57 || // не число от 0 до 9
-						   isKeyOf(registersTable, parsedStrings[i][t], r_m, r_s)))	 	   // и не регистр?
-					{
-						if (! isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // не метка?
-						{
-							printf("2.1) %d  %s\n", strlen(parsedStrings[i][t]), parsedStrings[i][t]);
-							labels[++l] = (char*)calloc(strlen(parsedStrings[i][k]), sizeof(char));
-							strcpy(labels[l], parsedStrings[i][0]);
-							Result *result = hashTable(labels, l + 1, -99999, 0); // (char (*)[STRING])
-							labelsTable = result->Table;
-							l_m = result->Data[0];
-							l_s = result->Data[1];
-						}
-						else
-						{	
-							int data = getKey(labelsTable, parsedStrings[i][t], l_m, l_s)->Data;
-							if (data > 0)
-								modifyKey(labelsTable, parsedStrings[i][t], data, l_m, l_s);
-						}
-					}
-				*/
 			}
 		}
-		placeCounter++;
 	}
 
-	Result *result = hashTable(labels, l + 1, labelsData, 0); // (char (*)[STRING])
+	Result *result = hashTable(labels, l + 1, labelsData, 0);
 	return result;
 }
 
@@ -166,7 +182,8 @@ int main(int argc, char *argv[])
 	//printHashTable(registersTable, reg_m);
 	printf("Первый проход... \n\n");
 
-	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift, labelsTable, lab_m, lab_shift);
+	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
+					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift);
 	labelsTable = result->Table;
 	lab_m = result->Data[0];
 	lab_shift = result->Data[1];
