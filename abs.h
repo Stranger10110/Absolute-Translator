@@ -12,4 +12,5 @@
 
 //#define BIT_GRID 32
 #define COMMAND_SIZE 5 // команда - 1 байт, первый и второй операнды - по 2 байта
+#define PLACE_COUNTER_MIN 13
 

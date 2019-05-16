@@ -1,5 +1,9 @@
         START 1000
 
+ZERO:	WORD	0
+number: WORD    10
+result: RESW    1
+
 start:
 m:      mov ax, number
         dec number
@@ -10,12 +14,11 @@ m:      mov ax, number
         mul result
         mov result, ax
 
-        cmp number, 0
+        cmp number, ZERO
         jne m
 
         mov result, ax
 
-number: WORD     10
-result: RESW     1
+
 
         END start

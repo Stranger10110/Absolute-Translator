@@ -2,14 +2,16 @@
 #include "hash.h"
 #include "abs.h"
 
+
 Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regTab, int r_m, int r_s,
 				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s)
 {	
-	int placeCounter = 0;
+	int placeCounter = PLACE_COUNTER_MIN;
 
 	int l = -1;
 	char** labels = (char**) calloc(numberOfStrings, sizeof(char*));
 	int *labelsData = (int*) calloc(numberOfStrings, sizeof(int));
+	Result *result;
 
 	for (int i = 0; i < numberOfStrings; i++)
 	{	
@@ -20,12 +22,36 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 			{	
 				switch (k)
 				{
+				case 0: // метка
+					/*
+						Если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений
+					*/
+					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
+					{	
+						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
+						strcpy(labels[l], parsedStrings[i][0]);
+						labelsData[l] = placeCounter;
+						result = hashTable(labels, l + 1, labelsData, 0);
+						labelsTable = result->Table;
+						l_m = result->Data[0];
+						l_s = result->Data[1];
+					}
+					break;
+
 				case 1: // оператор
 					if (!strcmp(parsedStrings[i][1], "start"))
+					{
 						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
-					else if (!strcmp(parsedStrings[i][1], "resb") || !strcmp(parsedStrings[i][1], "byte"))
-						placeCounter += 1;
-					else if (!strcmp(parsedStrings[i][1], "resw") || !strcmp(parsedStrings[i][1], "word"))
+						if (placeCounter < PLACE_COUNTER_MIN)
+							placeCounter = PLACE_COUNTER_MIN;
+					}
+					else if (!strcmp(parsedStrings[i][1], "resb"))
+						placeCounter += atoi(parsedStrings[i][2]);
+					else if (!strcmp(parsedStrings[i][1], "resw"))
+						placeCounter += atoi(parsedStrings[i][2]) * W;
+					else if (!strcmp(parsedStrings[i][1], "byte"))
+						placeCounter += strlen(parsedStrings[i][2]);
+					else if (!strcmp(parsedStrings[i][1], "word"))
 						placeCounter += W;
 					else if (isKeyOf(comTab, parsedStrings[i][1], c_m, c_s))
 					{
@@ -46,7 +72,7 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 						Если это не число и не регистр, то заносим строку в таблицу меток, если её нет в таблице,
 						иначе заменяем её на адрес. Если это регистр, заменяем его на код.
 					*/
-					if (!(parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57 || // не число от 0 до 9
+					if (!((parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57) || // не число от 0 до 9
 						isKeyOf(regTab, parsedStrings[i][t], r_m, r_s)))	 	   		  // и не регистр?
 					{
 						if (isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
@@ -54,37 +80,24 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 							char str[STRING];
 							sprintf(str, "%d", getKey(labelsTable, parsedStrings[i][t], l_m, l_s));
 							strcpy(parsedStrings[i][t], str);
-							break;
-						}
-						// иначе идём дальше и добавляем в таблицу
+						}						
 					}
 					else if (isKeyOf(regTab, parsedStrings[i][t], r_m, r_s))
 					{
 						char str[STRING];
 						sprintf(str, "%d", getKey(regTab, parsedStrings[i][t], r_m, r_s));
 						strcpy(parsedStrings[i][t], str);
-						break;
 					}
-
-				case 0: // метка
-					/*
-						Если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений
-					*/
-					if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
-					{	
-						labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]) + 1, sizeof(char));
-						strcpy(labels[l], parsedStrings[i][0]);
-						labelsData[l] = placeCounter;
-					}
-					break;
 				}
 			}
 		}
 	}
 
-	Result *result = hashTable(labels, l + 1, labelsData, 0);
+	result = hashTable(labels, l + 1, labelsData, 0);
 	return result;
 }
+
+
 
 int main(int argc, char *argv[])
 {	
@@ -155,7 +168,6 @@ int main(int argc, char *argv[])
 	char str[MAXCHAR];
 	int numberOfStrings = 0;
 	static char** parsedStrings[6];
-	//parsedStrings = (char***) calloc(1, sizeof(char**));
 	
 	//int n = -1;
 	while (fgets(str, MAXCHAR, fp) != NULL)
@@ -193,6 +205,11 @@ int main(int argc, char *argv[])
 	printHashTable(labelsTable, lab_m);
 	puts("");
 	//printHashTable(namesTable, nam_m);
+
+	for (int i = 0; i < numberOfStrings; i++)
+	{
+		printParsedString(parsedStrings[i]);
+	}
 
 	return 0;
 }
