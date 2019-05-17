@@ -1,8 +1,6 @@
-        START 1000
+        START 3576
 
 ZERO:	WORD	0
-number: WORD    10
-result: RESW    1
 
 start:
 m:      mov ax, number
@@ -19,6 +17,7 @@ m:      mov ax, number
 
         mov result, ax
 
-
+number: WORD    10
+result: RESW    1
 
         END start
