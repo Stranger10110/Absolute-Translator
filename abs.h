@@ -1,6 +1,6 @@
-// codes: 13 - 43
-#define COMMANDS {"add", "adc", "sub", "sbc", "mul", "imul", "div", "idiv", "cdw", "cwd", "cmp", "neg", "and", "or", "xor", "not", "test", "shl", "shr", "rol", "ror", "loop", "jmp", "jeq", "jne", "jg", "jge", "jl", "jle", "mov", "int"}
-#define NUMBER_OF_COMMANDS 31
+// codes: 13 - 45
+#define COMMANDS {"inc", "dec", "add", "adc", "sub", "sbc", "mul", "imul", "div", "idiv", "cdw", "cwd", "cmp", "neg", "and", "or", "xor", "not", "test", "shl", "shr", "rol", "ror", "loop", "jmp", "jeq", "jne", "jg", "jge", "jl", "jle", "mov", "int"}
+#define NUMBER_OF_COMMANDS 33
 
 /*// codes: 44 - 49
 #define DIRECTIVES {"start", "end", "byte", "word", "resb", "resw"}
@@ -13,5 +13,5 @@
 //#define BIT_GRID 32
 #define COMMAND_SIZE 5 // команда - 1 байт, первый и второй операнды - по 2 байта
 #define PLACE_COUNTER_MIN 13
-#define RAM	4
+#define RAM	2 //байта
 

@@ -4,7 +4,7 @@
 
 
 Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regTab, int r_m, int r_s,
-				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s, int *counter)
+				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s, int *counter, int *errorLine)
 {	
 	int placeCounter = PLACE_COUNTER_MIN;
 	*counter = placeCounter;
@@ -63,6 +63,13 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 					sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s));
 					strcpy(parsedStrings[i][1], str);
 				}
+				else if (!isKeyOf(comTab, parsedStrings[i][1], c_m, c_s) && strcmp(parsedStrings[i][1], "end"))
+				{	
+					puts(parsedStrings[i][1]);
+					Result* res;
+					*errorLine = i + 1;
+					return res;
+				}
 				break;
 			
 			case 3: // операнд 2
@@ -115,24 +122,28 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 				switch (k)
 				{
 				case 1: // оператор
+					if (!strcmp(parsedStrings[i][1], "start") || !strcmp(parsedStrings[i][1], "end"))
+						continue;
+					
+					//printf("%d) %d: ", i + 1, placeCounter);
+					int spaces = 1;
+					if (i + 1 < 10 && numberOfStrings > 9) spaces = 2;
+					if (i + 1 < 100 && numberOfStrings > 99) spaces = 3;
+					if (i + 1 < 10000 && numberOfStrings > 999) spaces = 4;
+					printf("%d)%*c%0.*X: ", i + 1, spaces, ' ', RAM * 2, placeCounter);
+
 					if (!strcmp(parsedStrings[i][1], "resb"))
 					{	
-						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
-						printf("%d) %d: ", i + 1, placeCounter);
 						printf("%X\n", 0);
 						placeCounter += atoi(parsedStrings[i][2]);
 					}
 					else if (!strcmp(parsedStrings[i][1], "resw"))
 					{	
-						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
-						printf("%d) %d: ", i + 1, placeCounter);
-						printf("%0*X\n", atoi(parsedStrings[i][2]) * W, 0);
+						printf("%0*X\n", atoi(parsedStrings[i][2]) * W * 2, 0);
 						placeCounter += atoi(parsedStrings[i][2]) * W;
 					}
 					else if (!strcmp(parsedStrings[i][1], "byte"))
 					{	
-						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
-						printf("%d) %d: ", i + 1, placeCounter);
 						for (int g = 0; g < strlen(parsedStrings[i][2]); g++)
 							if (parsedStrings[i][2][g] != "'"[0] &&
 								parsedStrings[i][2][g] != '"')
@@ -142,18 +153,12 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 					}
 					else if (!strcmp(parsedStrings[i][1], "word"))
 					{	
-						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
-						printf("%d) %d: ", i + 1, placeCounter);
-						printf("%0.4X\n", atoi(parsedStrings[i][2]));
+						printf("%0.8X\n", atoi(parsedStrings[i][2]));
 						placeCounter += W;
 					}
-					else if (!strcmp(parsedStrings[i][1], "start") || !strcmp(parsedStrings[i][1], "end"))
-						continue;
 					else
-					{	
-						//printf("%d) %0.*X: ", i + 1, RAM, placeCounter);
-						printf("%d) %d: ", i + 1, placeCounter);
-						printf("%.1X ", atoi(parsedStrings[i][1]));
+					{
+						printf("%.2X", atoi(parsedStrings[i][1]));
 						placeCounter += COMMAND_SIZE;
 						place = 1;
 					}
@@ -168,13 +173,13 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						//char str[STRING];
 						//sprintf(str, "%d", );
 						if (place)
-							printf("%0.4X ", getKey(labTab, parsedStrings[i][t], l_m, l_s));
+							printf("%0.4X", getKey(labTab, parsedStrings[i][t], l_m, l_s));
 						//strcpy(parsedStrings[i][t], str);
 					}
 					else if (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57)
 					{	
 						if (place)
-							printf("%0.4X ", atoi(parsedStrings[i][t]));
+							printf("%0.4X", atoi(parsedStrings[i][t]));
 					}
 					else
 					{
@@ -299,16 +304,25 @@ int main(int argc, char *argv[])
 	fclose(fp);
 	puts("");
 	
-	//printHashTable(commandsTable, com_m);
+	//printHashTable(commandsTable, com_m, "команды");
 	//printHashTable(registersTable, reg_m);
 	//printf("Первый проход... \n\n");
 
-	int placeCounterStart;
+	int placeCounterStart, errorLine = -1;
 	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
-					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift, &placeCounterStart);
-	labelsTable = result->Table;
-	lab_m = result->Data[0];
-	lab_shift = result->Data[1];
+					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift, &placeCounterStart, &errorLine);
+	if (errorLine == -1)
+	{	
+		labelsTable = result->Table;
+		lab_m = result->Data[0];
+		lab_shift = result->Data[1];
+	}
+	else
+	{
+		printf("Error in string #%d - unknown operator!\n", errorLine);
+		return 0;
+	}
+	
 
 	//puts("");
 	//printf("%d  %d  %d  %d\n", lab_m, lab_shift);
@@ -324,12 +338,12 @@ int main(int argc, char *argv[])
 			   	   	   registersTable, reg_m, reg_shift, commandsTable, com_m, com_shift,
 				   	   labelsTable, lab_m, lab_shift, placeCounterStart);
 	if (res_code)
-		printf("Error in string #%d - missing identifier!", res_code);
-	else
+		printf("Error in string #%d - unknown identifier!\n", res_code);
+	/*else
 	{	
 		puts("\n");
 		printHashTable(labelsTable, lab_m, "метки");
-	}
+	}*/
 
 	return 0;
 }

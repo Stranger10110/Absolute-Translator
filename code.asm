@@ -1,4 +1,4 @@
-        START 1000
+        START 3576
 
 ZERO:	WORD	0
 
