@@ -159,7 +159,11 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 					else
 					{
 						printf("%.2X", atoi(parsedStrings[i][1]));
-						placeCounter += COMMAND_SIZE;
+						if (strlen(parsedStrings[i][3]) != 0)
+							placeCounter += COMMAND_SIZE;
+						else
+							placeCounter += COMMAND_SIZE - 2;
+						
 						place = 1;
 					}
 					break;
