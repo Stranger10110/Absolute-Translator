@@ -3,9 +3,10 @@
 #include "abs.h"
 
 
-Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regTab, int r_m, int r_s,
-				  DataRecord *comTab, int c_m, int c_s, DataRecord *labelsTable, int l_m, int l_s, int *counter, int *errorLine)
-{	
+Result* firstPass(char** parsedStrings[6], int numberOfStrings,
+				  DataRecord *regTab, int r_m, int r_s, DataRecord *comTab, int c_m, int c_s,
+				  DataRecord *labelsTable, int l_m, int l_s, int *counter, int *errorLine)
+{
 	int placeCounter = PLACE_COUNTER_MIN;
 	*counter = placeCounter;
 
@@ -26,8 +27,8 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 				/*
 					Если метки нет в таблице, заносим её туда и назначаем текущий адрес размещений
 				*/
-				if (!isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
-				{
+				if (labelsTable == NULL || !isKeyOf(labelsTable, parsedStrings[i][0], l_m, l_s))
+				{	
 					labels[++l] = (char*) calloc(strlen(parsedStrings[i][0]), sizeof(char));
 					strcpy(labels[l], parsedStrings[i][0]);
 					labelsData[l] = placeCounter;
@@ -83,14 +84,14 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings, DataRecord *regT
 				*/
 				if (!isKeyOf(regTab, parsedStrings[i][t], r_m, r_s)) // не регистр?
 				{
-					if (isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
+					if (labelsTable != NULL && isKeyOf(labelsTable, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
 					{
 						char str[STRING];
 						sprintf(str, "%d", getKey(labelsTable, parsedStrings[i][t], l_m, l_s));
 						strcpy(parsedStrings[i][t], str);
 					}						
 				}
-				else// if (isKeyOf(regTab, parsedStrings[i][t], r_m, r_s))
+				else
 				{
 					char str[STRING];
 					sprintf(str, "%d", getKey(regTab, parsedStrings[i][t], r_m, r_s));
@@ -125,7 +126,6 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 					if (!strcmp(parsedStrings[i][1], "start") || !strcmp(parsedStrings[i][1], "end"))
 						continue;
 					
-					//printf("%d) %d: ", i + 1, placeCounter);
 					int spaces = 1;
 					if (i + 1 < 10 && numberOfStrings > 9) spaces = 2;
 					if (i + 1 < 100 && numberOfStrings > 99) spaces = 3;
@@ -174,11 +174,8 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 				case 2: // второй операнд
 					if (isKeyOf(labTab, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
 					{
-						//char str[STRING];
-						//sprintf(str, "%d", );
 						if (place)
 							printf("%0.4X", getKey(labTab, parsedStrings[i][t], l_m, l_s));
-						//strcpy(parsedStrings[i][t], str);
 					}
 					else if (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57)
 					{	
@@ -191,11 +188,6 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 					}
 				}
 			}
-			/*else
-			{	
-				if (k == 2 || k == 3)
-					printf("%0*X", 8, 0);
-			}*/
 			
 		}
 
@@ -220,16 +212,6 @@ int main(int argc, char *argv[])
 		strcpy(commands[i], c[i]);
 	}
 
-	/*char d[NUMBER_OF_DIRECTIVES][STRING] = DIRECTIVES;
-	char** directives = (char**) calloc(NUMBER_OF_DIRECTIVES, sizeof(char*));
-	int *directivesData = (int*) calloc(NUMBER_OF_DIRECTIVES, sizeof(int)); start = 43;
-	for (int i = 0; i < NUMBER_OF_DIRECTIVES; i++)
-	{
-		directives[i] = (char*)calloc(STRING, sizeof(char));
-		directivesData[i] = start++;
-		strcpy(directives[i], d[i]);
-	}*/
-
 	char r[NUMBER_OF_REGISTERS][STRING] = REGISTERS;
 	char** registers = (char**) calloc(NUMBER_OF_REGISTERS, sizeof(char*));
 	int *registersData = (int*) calloc(NUMBER_OF_REGISTERS, sizeof(int)); start = 1;
@@ -246,26 +228,14 @@ int main(int argc, char *argv[])
 	int com_m = result->Data[0];
 	int com_shift = result->Data[1];
 
-	/*printf("\nХеш таблица директив:\n");
-	result = hashTable(directives, NUMBER_OF_DIRECTIVES, directivesData, 1);
-	DataRecord *directivesTable = result->Table;
-	int dir_m = result->Data[0];
-	int dir_shift = result->Data[1];*/
-
 	printf("\nХеш таблица регистров:\n");
 	result = hashTable(registers, NUMBER_OF_REGISTERS, registersData, 1);
 	DataRecord *registersTable = result->Table;
 	int reg_m = result->Data[0];
 	int reg_shift = result->Data[1];
 
-	char** t = (char**) calloc(1, sizeof(char*));
-	t[0] = (char*)calloc(STRING, sizeof(char));
-	int *tD = (int*) calloc(1, sizeof(int));
-	tD[0] = 0;
-	result = hashTable(t, 1, tD, 0);
-	DataRecord *labelsTable = result->Table;
-	int lab_m = result->Data[0];
-	int lab_shift = result->Data[1];
+	int lab_m = 1, lab_shift = 1;
+	DataRecord *labelsTable = NULL;
 
 
 	printf("\n\nWorking...\n\n");
@@ -275,9 +245,7 @@ int main(int argc, char *argv[])
 	char str[MAXCHAR];
 	int numberOfStrings = 0;
 	static char** parsedStrings[6];
-	//char*** originalStrings = (char***) calloc(1, sizeof(char**));
 	
-	//int n = 0;
 	printf("Оригинал: \n\n");
 	while (fgets(str, MAXCHAR, fp) != NULL)
 	{
@@ -287,30 +255,17 @@ int main(int argc, char *argv[])
 			res[i] = (char*) calloc(strlen(str), sizeof(char));
 		}
 
-		//Parsing assembly string
 		if (parseString(str, res))
 		{
 			++numberOfStrings;
 			printf("%d) '%s'\n", numberOfStrings, rmSymbs(str, "\n"));
 			parsedStrings[numberOfStrings - 1] = (char**) calloc(6, sizeof(char*));
 			parsedStrings[numberOfStrings - 1] = res;
-
-			/*originalStrings[numberOfStrings - 1] = (char**) calloc(6, sizeof(char*));
-			for (int n = 0; n < 5; n++)
-			{
-				originalStrings[numberOfStrings-1][n] = (char*) calloc(strlen(res[n]), sizeof(char));
-				strcpy(originalStrings[numberOfStrings-1][n], res[n]);
-			}*/
-			
-			//printParsedString(parsedStrings[numberOfStrings - 1]);
 		}
 	}
 	fclose(fp);
 	puts("");
-	
-	//printHashTable(commandsTable, com_m, "команды");
-	//printHashTable(registersTable, reg_m);
-	//printf("Первый проход... \n\n");
+
 
 	int placeCounterStart, errorLine = -1;
 	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
@@ -328,26 +283,12 @@ int main(int argc, char *argv[])
 	}
 	
 
-	//puts("");
-	//printf("%d  %d  %d  %d\n", lab_m, lab_shift);
 	puts("Результат:\n");
-	//printHashTable(namesTable, nam_m);
-
-	/*for (int i = 0; i < numberOfStrings; i++)
-	{
-		printParsedString(parsedStrings[i]);
-	}*/
-
 	int res_code = secondPass(parsedStrings, numberOfStrings,
 			   	   	   registersTable, reg_m, reg_shift, commandsTable, com_m, com_shift,
 				   	   labelsTable, lab_m, lab_shift, placeCounterStart);
 	if (res_code)
 		printf("Error in string #%d - unknown identifier!\n", res_code);
-	/*else
-	{	
-		puts("\n");
-		printHashTable(labelsTable, lab_m, "метки");
-	}*/
 
 	return 0;
 }
