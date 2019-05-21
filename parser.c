@@ -33,32 +33,9 @@ int parseString(char *string, char* res[])
 	switch (length)
 	{
 		case 1:
-		{
 			return 0;
-		}
-
 		case 2:
-		{
-			/*int error = 0;
-			switch (string[0])
-			{
-				case ' ':
-					break;
-				case '	':
-					break;
-				case '\0':
-					break;
-				default:
-					error = 1;
-			}
-
-			if (error)
-				for (int k = 0; k < 4; k++)
-				{
-					strcpy(res[k], "ERROR");
-				}*/
 			return 0;
-		}
 	}
 
 	int hasComment = 0;
@@ -162,12 +139,9 @@ void printParsedString(char* res[])
 	printf("%s'%s' | ", "Операнд_1: ", res[i++]);
 	printf("%s'%s' | ", "Операнд_2: ", res[i++]);
 	printf("%s'%s'\n\n\n", "Комментарий: ", res[i]);
-	/*for (i = 0; i < 5; i++)
-		printf("'%s'  ", res[i]);
-	puts("\n");*/
 }
 
-int main_3(int argc, char *argv[])
+/*int main_3(int argc, char *argv[])
 {
 	FILE *fp;
 	char str[MAXCHAR];
@@ -191,12 +165,7 @@ int main_3(int argc, char *argv[])
 			printf("Оригинал: '%s'\n", rmSymbs(str, "\n"));
 			printParsedString(res);
 		}
-		/*else
-		{
-			printf("Error! [%s]\n\n", rmSymbs(str, "\n"));
-		}*/
-		
 	}
 	fclose(fp);
 	return 0;
-}
+}*/
