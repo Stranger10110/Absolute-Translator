@@ -5,16 +5,17 @@ char* rmSymbs(char *string, char *x)
 	if (strlen(string) == 1) return string;
 
 	int j = 0;
+	char* new_string = (char*) calloc(strlen(string), sizeof(char));
 	for (int i = 0; string[i] != '\0'; i++)
 	{
 		int include = 1;
 		for (int k = 0; k < strlen(x); k++)
 			if (string[i] == x[k]) include = 0;
 
-		if (include) string[j++] = string[i];
+		if (include) new_string[j++] = string[i];
 	}
-	string[j] = '\0';
-	return string;
+	new_string[j] = '\0';
+	return new_string;
 }
 
 void toLowerCase(char *string)

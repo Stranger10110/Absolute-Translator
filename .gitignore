@@ -14,3 +14,7 @@ CppProperties\.json
 programm\.txt
 
 *.obj
+
+prog\.asm
+
+programm\.asm

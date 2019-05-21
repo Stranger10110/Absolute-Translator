@@ -1,4 +1,4 @@
-        START 3576
+        START 1000h
 
 ZERO:	WORD	0
 
@@ -19,5 +19,9 @@ m:      mov ax, number
 
 number: WORD    10
 result: RESW    1
+a:	resb	2
+b:	byte	hello
+c:	byte	256
+d:	byte	ED1Ah
 
         END start
