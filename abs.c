@@ -5,7 +5,7 @@
 
 Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 				  DataRecord *regTab, int r_m, int r_s, DataRecord *comTab, int c_m, int c_s,
-				  DataRecord *labelsTable, int l_m, int l_s, int *counter, int *errorLine)
+				  DataRecord *labelsTable, int l_m, int l_s, int *counter, int *errorLine, int *codeSize)
 {
 	int placeCounter = PLACE_COUNTER_MIN;
 	*counter = placeCounter;
@@ -41,6 +41,8 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 				break;
 
 			case 1: // оператор
+				*codeSize = placeCounter - *counter;
+
 				if (!strcmp(parsedStrings[i][1], "start"))
 				{
 					placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
@@ -58,7 +60,10 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 					placeCounter += W;
 				else if (isKeyOf(comTab, parsedStrings[i][1], c_m, c_s))
 				{
-					placeCounter += COMMAND_SIZE;
+					if (strlen(parsedStrings[i][3]) != 0)
+							placeCounter += COMMAND_SIZE;
+						else
+							placeCounter += COMMAND_SIZE - 2;
 
 					char str[STRING];
 					sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s));
@@ -108,62 +113,121 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 
 int secondPass(char** parsedStrings[6], int numberOfStrings,
 				DataRecord *regTab, int r_m, int r_s, DataRecord *comTab, int c_m, int c_s,
-				DataRecord *labTab, int l_m, int l_s, int counter)
+				DataRecord *labTab, int l_m, int l_s, int counter, int codeSize, char *filename)
 {	
+	int sign = 1, buffer;
+	FILE *object_file = fopen("result.obj", "wb");
 	int placeCounter = counter;
 
 	for (int i = 0; i < numberOfStrings; i++)
 	{	
 		/* Print address and object code */
-		int t = 2, place = 0;
+		int t = 2, place = 0, spaces = 1;
 		for (int k = 1; k < 4; k++)
 		{	
 			if (strlen(parsedStrings[i][k]) != 0)
-			{
+			{	
 				switch (k)
 				{
 				case 1: // оператор
-					if (!strcmp(parsedStrings[i][1], "start") || !strcmp(parsedStrings[i][1], "end"))
+					if (!strcmp(parsedStrings[i][1], "start"))
+					{	
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись заголовка
+						buffer = atoi(parsedStrings[i][2]);
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // операнд start
+						buffer = codeSize;
+						fwrite(&buffer, (size_t)4, 1, object_file); 	 	 // длина программы
+						fwrite(filename, (size_t)strlen(filename), 1, object_file); // имя файла
+						++sign; continue;
+					}
+					else if (!strcmp(parsedStrings[i][1], "end"))
+					{
+						++sign;
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись окончания
+						buffer = atoi(parsedStrings[i][2]);
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // операнд end
 						continue;
+					}
 					
-					int spaces = 1;
 					if (i + 1 < 10 && numberOfStrings > 9) spaces = 2;
 					if (i + 1 < 100 && numberOfStrings > 99) spaces = 3;
 					if (i + 1 < 10000 && numberOfStrings > 999) spaces = 4;
 					printf("%d)%*c%0.*X: ", i + 1, spaces, ' ', RAM * 2, placeCounter);
-
 					if (!strcmp(parsedStrings[i][1], "resb"))
 					{	
-						printf("%X\n", 0);
+						printf("%0*X\n", atoi(parsedStrings[i][2]) * 2, 0);
+
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
+						buffer = atoi(parsedStrings[i][2]) + 2;
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // длина записи
+						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = 0;
+						//for (int i = 0; i < atoi(parsedStrings[i][2]); i++)
+						fwrite(&buffer, (size_t)1, atoi(parsedStrings[i][2]), object_file); // нули
+						
 						placeCounter += atoi(parsedStrings[i][2]);
 					}
 					else if (!strcmp(parsedStrings[i][1], "resw"))
 					{	
 						printf("%0*X\n", atoi(parsedStrings[i][2]) * W * 2, 0);
+
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
+						buffer = atoi(parsedStrings[i][2]) * W + 2;
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // длина записи
+						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = 0;
+						//for (int i = 0; i < atoi(parsedStrings[i][2]); i++)
+						fwrite(&buffer, (size_t)1, atoi(parsedStrings[i][2]) * W, object_file);	// нули
+
 						placeCounter += atoi(parsedStrings[i][2]) * W;
 					}
 					else if (!strcmp(parsedStrings[i][1], "byte"))
 					{	
-						for (int g = 0; g < strlen(parsedStrings[i][2]); g++)
-							if (parsedStrings[i][2][g] != "'"[0] &&
-								parsedStrings[i][2][g] != '"')
-								printf("%c\n", parsedStrings[i][2][g]);
-						printf("\n");
+						//for (int g = 0; g < strlen(parsedStrings[i][2]); g++)
+							//if (parsedStrings[i][2][g] != "'"[0] && parsedStrings[i][2][g] != '"')
+						printf("%s\n", rmSymbs(parsedStrings[i][2], "\"\'"));
+						//printf("\n");
+
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
+						char *str = rmSymbs(parsedStrings[i][2], "\"\'");
+						buffer = strlen(str) + 2;
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // длина записи
+						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						fwrite(&str, (size_t)strlen(str), 1, object_file);	 // символьная константа
+
 						placeCounter += strlen(parsedStrings[i][2]);
 					}
 					else if (!strcmp(parsedStrings[i][1], "word"))
 					{	
 						printf("%0.8X\n", atoi(parsedStrings[i][2]));
+
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
+						buffer = 4;
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // длина записи
+						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = atoi(parsedStrings[i][2]);
+						fwrite(&buffer, (size_t)W, 1, object_file);	 		 // число размером W байта
+
 						placeCounter += W;
 					}
 					else
 					{
 						printf("%.2X", atoi(parsedStrings[i][1]));
+
+						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
+						if (strlen(parsedStrings[i][3]) != 0)
+							buffer = 5;
+						else
+							buffer = 3;
+						fwrite(&buffer, (size_t)2, 1, object_file);			 // длина записи
+						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = atoi(parsedStrings[i][1]);
+						fwrite(&buffer, (size_t)1, 1, object_file);			 // команда (1 байт)
+
 						if (strlen(parsedStrings[i][3]) != 0)
 							placeCounter += COMMAND_SIZE;
 						else
 							placeCounter += COMMAND_SIZE - 2;
-						
 						place = 1;
 					}
 					break;
@@ -175,12 +239,20 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 					if (isKeyOf(labTab, parsedStrings[i][t], l_m, l_s)) // в таблице меток?
 					{
 						if (place)
+						{
 							printf("%0.4X", getKey(labTab, parsedStrings[i][t], l_m, l_s));
+							buffer = getKey(labTab, parsedStrings[i][t], l_m, l_s);
+							fwrite(&buffer, (size_t)2, 1, object_file);	// машинная команда (3 или 5 байт)
+						}
 					}
 					else if (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57)
 					{	
 						if (place)
+						{
 							printf("%0.4X", atoi(parsedStrings[i][t]));
+							buffer = atoi(parsedStrings[i][t]);
+							fwrite(&buffer, (size_t)2, 1, object_file);	// машинная команда (3 или 5 байт)
+						}
 					}
 					else
 					{
@@ -267,9 +339,10 @@ int main(int argc, char *argv[])
 	puts("");
 
 
-	int placeCounterStart, errorLine = -1;
+	int placeCounterStart, errorLine = -1, codeSize;
 	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
-					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift, &placeCounterStart, &errorLine);
+					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift,
+					   &placeCounterStart, &errorLine, &codeSize);
 	if (errorLine == -1)
 	{	
 		labelsTable = result->Table;
@@ -284,11 +357,12 @@ int main(int argc, char *argv[])
 	
 
 	puts("Результат:\n");
-	int res_code = secondPass(parsedStrings, numberOfStrings,
-			   	   	   registersTable, reg_m, reg_shift, commandsTable, com_m, com_shift,
-				   	   labelsTable, lab_m, lab_shift, placeCounterStart);
+	int res_code = secondPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
+							  commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift,
+							  placeCounterStart, codeSize, argv[1]);
 	if (res_code)
 		printf("Error in string #%d - unknown identifier!\n", res_code);
+	
 
 	return 0;
 }

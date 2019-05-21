@@ -10,3 +10,7 @@ CppProperties\.json
 *.bin
 
 *.ipch
+
+programm\.txt
+
+*.obj
