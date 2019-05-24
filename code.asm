@@ -1,7 +1,5 @@
         START 1000h
 
-ZERO:	WORD	0
-
 start:
 m:      mov ax, number
         dec number
@@ -12,7 +10,7 @@ m:      mov ax, number
         mul result
         mov result, ax
 
-        cmp number, ZERO
+        cmp number, 0
         jne m
 
         mov result, ax
@@ -20,8 +18,8 @@ m:      mov ax, number
 number: WORD    10
 result: RESW    1
 a:	resb	2
-b:	byte	hello
-c:	byte	256
+b:	byte	"hello"
 d:	byte	ED1Ah
+c:	byte	256
 
         END start

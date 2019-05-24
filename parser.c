@@ -54,13 +54,9 @@ int parseString(char *string, char* res[])
 	{
 		switch (string[i])
 		{
-		case ' ':
-			break;
-		case '	':
-			break;
-		case ',':
-			break;
-		case '\0':
+		case '\'': case '"':
+		case ' ': case '	':
+		case ',': case '\0':
 			break;
 
 		case LABEL:
@@ -90,7 +86,9 @@ int parseString(char *string, char* res[])
 		default:
 			temp[c++] = string[i]; // записываем каждый "значащий" символ во временный буфер
 
-			if (((string[i+1] == ' ') || (string[i + 1] == '	') || (string[i+1] == ',') ||  (i + 1 == length - 1)))
+			if (((string[i+1] == ' ') || (string[i + 1] == '	') || (string[i + 1] == ',') ||
+				(i + 1 == length - 1) || (string[i + 1] == COMMENT)|| (string[i + 1] == '\'')||
+				(string[i + 1] == '"')))
 			{	
 				if (strlen(res[1]) == 0)
 				{

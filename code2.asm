@@ -1,4 +1,4 @@
-	START 	1357
+	START 	0
 
 start:  mov	ax, 1
 	mov	cx, 8
