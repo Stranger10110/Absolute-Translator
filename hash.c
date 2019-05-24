@@ -76,9 +76,7 @@ int isKeyOf(DataRecord *hashTable, char* key, int m, int shift)
 	int h = Hash(key, m, shift);
 
 	if (!hashTable[h].key)
-	{
 		return 0;
-	}
 	else if (!strcmp(hashTable[h].key, key))
 		return 1;
 	else
@@ -89,9 +87,7 @@ int isKeyOf(DataRecord *hashTable, char* key, int m, int shift)
 			if (++count > m) return 0;
 
 			if (!hashTable[h].key)
-			{
 				return 0;
-			}
 			else if (!strcmp(hashTable[h].key, key))
 				return 1;
 
@@ -106,9 +102,7 @@ int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift)
 	int h = Hash(key, m, shift);
 
 	if (!hashTable[h].key)
-	{
 		return 0;
-	}
 	else if (!strcmp(hashTable[h].key, key))
 	{
 		hashTable[h].Data = data;
@@ -120,9 +114,7 @@ int modifyKey(DataRecord *hashTable, char* key, int data, int m, int shift)
 		while (++h < m)
 		{
 			if (!hashTable[h].key)
-			{
 				return 0;
-			}
 			else if (!strcmp(hashTable[h].key, key))
 			{
 				hashTable[h].Data = data;
@@ -198,8 +190,6 @@ DataRecord* initHashTable(char **words, int num, int m, int shift, int data[], i
 	for (int i = 0; i < num; i++)
 	{
 		int hash = Hash(words[i], m, shift);
-		//puts(words[i]);
-		//printf("hash = %d\n\n", hash);
 		collisions += insertKey(hashTable, words[i], hash, data[i], m, shift);
 	}
 
@@ -217,10 +207,7 @@ Result* hashTable(char **words, int num, int data[], int print)
 		if (simpleNumbers[k] < num) continue;
 		for (int shift = 1; shift <= 31; shift++)
 		{	
-			//for (int i = 0; i < num; i++)
-			//	printf("%s\n", words[i]);
-			//puts("");
-			DataRecord* hashTable = initHashTable(words, num, simpleNumbers[k], ++shift, data, &collisions);
+			DataRecord* hashTable = initHashTable(words, num, simpleNumbers[k], shift, data, &collisions);
 			if (collisions <= 2)
 			{
 				if (print)
@@ -238,14 +225,14 @@ Result* hashTable(char **words, int num, int data[], int print)
 	}
 }
 
-int main_2()
+/*int main_2()
 {
 	srand(time(NULL));
 
-	/*char words[17][STRING] = {"END", "BYTE", "START", "RESB", "RESW", "WORD",
-				  "add", "adc", "and", "sub", "sbc", "mul", "imul",
-				  "neg", "div", "idiv", "or"};
-	*/
+	//char words[17][STRING] = {"END", "BYTE", "START", "RESB", "RESW", "WORD",
+	//			  "add", "adc", "and", "sub", "sbc", "mul", "imul",
+	//			  "neg", "div", "idiv", "or"};
+
 	char words[NUMBER_OF_COMMANDS][STRING] = COMMANDS;
 
 	DataRecord *hashTable = (DataRecord*) calloc(M, sizeof(DataRecord));
@@ -269,12 +256,12 @@ int main_2()
 	printf("Кол-во коллизий: %d\n\n", collisions);
 	//printHashTable(hashTable, M);
 
-	/*printf("Get 'idiv': '%d'\n", getKey(hashTable, M, "idiv"));
+	printf("Get 'idiv': '%d'\n", getKey(hashTable, M, "idiv"));
 	printf("Get 'sbc': '%d'\n", getKey(hashTable, M, "sbc"));
 	printf("Get 'neg': '%d'\n", getKey(hashTable, M, "neg"));
 	printf("Get 'dog': '%d'\n", getKey(hashTable, M, "dog"));
 	printf("Get 'ice_cream': '%d'\n", getKey(hashTable, M, "ice_cream"));
-	printf("Get 'a#d$hj!**03@9j$fm': '%d'\n", getKey(hashTable, M, "aa#d$hj!**03@9j$fm"));*/
+	printf("Get 'a#d$hj!**03@9j$fm': '%d'\n", getKey(hashTable, M, "aa#d$hj!**03@9j$fm"));
 
 	free(hashTable);
-}
+}*/

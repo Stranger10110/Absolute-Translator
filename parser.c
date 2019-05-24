@@ -5,16 +5,17 @@ char* rmSymbs(char *string, char *x)
 	if (strlen(string) == 1) return string;
 
 	int j = 0;
+	char* new_string = (char*) calloc(strlen(string), sizeof(char));
 	for (int i = 0; string[i] != '\0'; i++)
 	{
 		int include = 1;
 		for (int k = 0; k < strlen(x); k++)
 			if (string[i] == x[k]) include = 0;
 
-		if (include) string[j++] = string[i];
+		if (include) new_string[j++] = string[i];
 	}
-	string[j] = '\0';
-	return string;
+	new_string[j] = '\0';
+	return new_string;
 }
 
 void toLowerCase(char *string)
@@ -33,32 +34,9 @@ int parseString(char *string, char* res[])
 	switch (length)
 	{
 		case 1:
-		{
 			return 0;
-		}
-
 		case 2:
-		{
-			/*int error = 0;
-			switch (string[0])
-			{
-				case ' ':
-					break;
-				case '	':
-					break;
-				case '\0':
-					break;
-				default:
-					error = 1;
-			}
-
-			if (error)
-				for (int k = 0; k < 4; k++)
-				{
-					strcpy(res[k], "ERROR");
-				}*/
 			return 0;
-		}
 	}
 
 	int hasComment = 0;
@@ -76,13 +54,9 @@ int parseString(char *string, char* res[])
 	{
 		switch (string[i])
 		{
-		case ' ':
-			break;
-		case '	':
-			break;
-		case ',':
-			break;
-		case '\0':
+		case '\'': case '"':
+		case ' ': case '	':
+		case ',': case '\0':
 			break;
 
 		case LABEL:
@@ -112,7 +86,9 @@ int parseString(char *string, char* res[])
 		default:
 			temp[c++] = string[i]; // записываем каждый "значащий" символ во временный буфер
 
-			if (((string[i+1] == ' ') || (string[i + 1] == '	') || (string[i+1] == ',') ||  (i + 1 == length - 1)))
+			if (((string[i+1] == ' ') || (string[i + 1] == '	') || (string[i + 1] == ',') ||
+				(i + 1 == length - 1) || (string[i + 1] == COMMENT)|| (string[i + 1] == '\'')||
+				(string[i + 1] == '"')))
 			{	
 				if (strlen(res[1]) == 0)
 				{
@@ -162,12 +138,9 @@ void printParsedString(char* res[])
 	printf("%s'%s' | ", "Операнд_1: ", res[i++]);
 	printf("%s'%s' | ", "Операнд_2: ", res[i++]);
 	printf("%s'%s'\n\n\n", "Комментарий: ", res[i]);
-	/*for (i = 0; i < 5; i++)
-		printf("'%s'  ", res[i]);
-	puts("\n");*/
 }
 
-int main_3(int argc, char *argv[])
+/*int main_3(int argc, char *argv[])
 {
 	FILE *fp;
 	char str[MAXCHAR];
@@ -191,12 +164,7 @@ int main_3(int argc, char *argv[])
 			printf("Оригинал: '%s'\n", rmSymbs(str, "\n"));
 			printParsedString(res);
 		}
-		/*else
-		{
-			printf("Error! [%s]\n\n", rmSymbs(str, "\n"));
-		}*/
-		
 	}
 	fclose(fp);
 	return 0;
-}
+}*/
