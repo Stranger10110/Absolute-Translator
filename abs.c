@@ -2,6 +2,7 @@
 #include "hash.h"
 #include "abs.h"
 
+
 long pow_(int a, int n)
 {
 	long res = 1;
@@ -9,51 +10,50 @@ long pow_(int a, int n)
 	return res;
 }
 
-int fromHextoInt(char *hex)
+
+int fromHexToInt(char *hex)
 {
 	int result = 0;
 	for (int i = 0; i < strlen(hex); i++)
 	{
 		switch (hex[i])
 		{
-		case 'a':
-		case 'A':
+		case 'a': case 'A':
 			result += 10 * pow_(16, strlen(hex) - i - 1);
 			break;
 		
-		case 'b':
-		case 'B':
-			result += 11 * pow_(16, strlen(hex) - i - 1);
-			break;
+		case 'b': case 'B':
+			result += 11 * pow_(16, strlen(hex) - i - 1); break;
 		
-		case 'c':
-		case 'C':
-			result += 12 * pow_(16, strlen(hex) - i - 1);
-			break;
+		case 'c': case 'C':
+			result += 12 * pow_(16, strlen(hex) - i - 1); break;
 		
-		case 'd':
-		case 'D':
-			result += 13 * pow_(16, strlen(hex) - i - 1);
-			break;
+		case 'd': case 'D':
+			result += 13 * pow_(16, strlen(hex) - i - 1); break;
 		
-		case 'e':
-		case 'E':
-			result += 14 * pow_(16, strlen(hex) - i - 1);
-			break;
+		case 'e': case 'E':
+			result += 14 * pow_(16, strlen(hex) - i - 1); break;
 		
-		case 'f':
-		case 'F':
-			result += 15 * pow_(16, strlen(hex) - i - 1);
-			break;
+		case 'f': case 'F':
+			result += 15 * pow_(16, strlen(hex) - i - 1); break;
 		
 		default:
-			result += ((int)hex[i] - 48) * pow_(16, strlen(hex) - i - 1);
-			break;
+			result += ((int)hex[i] - 48) * pow_(16, strlen(hex) - i - 1); break;
 		}
 	}
 
 	return result;
 }
+
+
+int fromStrToInt(char *string)
+{
+	if (string[strlen(string) - 1] != 'h')
+		return atoi(string);
+	else
+		return fromHexToInt(rmSymbs(string, "h"));
+}
+
 
 int numOfBytes(int x)
 {
@@ -62,11 +62,26 @@ int numOfBytes(int x)
 	return n / 8;
 }
 
+
+int isNum(char *str)
+{
+	if (str[strlen(str) - 1] == 'h')
+		return 1;
+	else
+	{
+		for (int i = 0; i < strlen(str); i++)
+			if (!isdigit(str[i])) return 0;
+		return 1;
+	}
+	return 0;
+}
+
+
 Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 				  DataRecord *regTab, int r_m, int r_s, DataRecord *comTab, int c_m, int c_s,
 				  DataRecord *labelsTable, int l_m, int l_s, int *counter, int *errorLine, int *codeSize)
 {
-	int placeCounter = PLACE_COUNTER_MIN;
+	int placeCounter = 0;
 	*counter = placeCounter;
 
 	int l = -1;
@@ -76,6 +91,40 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 
 	for (int i = 0; i < numberOfStrings; i++)
 	{	
+		*codeSize = placeCounter - *counter; // размер кода
+
+		/* Проверяем, какая адрессация */
+		int signOfAdress = 0; // по умолчанию без операндов
+		if (strlen(parsedStrings[i][3]) == 0)
+		{
+			if (isKeyOf(regTab, parsedStrings[i][2], r_m, r_s))
+				signOfAdress = 9 << 12;
+			else if (isNum(parsedStrings[i][2]))
+				signOfAdress = 11 << 12;
+			else
+				signOfAdress = 10 << 12;
+		}
+		else
+		{
+			if (isKeyOf(regTab, parsedStrings[i][2], r_m, r_s) && isNum(parsedStrings[i][3]))
+				signOfAdress = 3 << 12;
+			else if (isNum(parsedStrings[i][2]) && isKeyOf(regTab, parsedStrings[i][3], r_m, r_s))
+				signOfAdress = 4 << 12;
+			else if (isKeyOf(regTab, parsedStrings[i][2], r_m, r_s) && isKeyOf(regTab, parsedStrings[i][3], r_m, r_s))
+				signOfAdress = 7 << 12;
+			else if (isKeyOf(regTab, parsedStrings[i][2], r_m, r_s))
+				signOfAdress = 1 << 12;
+			else if (isKeyOf(regTab, parsedStrings[i][3], r_m, r_s))
+				signOfAdress = 2 << 12;
+			else if (isNum(parsedStrings[i][3]))
+				signOfAdress = 5 << 12;
+			else if (isNum(parsedStrings[i][2]))
+				signOfAdress = 6 << 12;
+			else
+				signOfAdress = 8 << 12;
+		}
+		
+
 		int t = 2;
 		for (int k = 0; k < 4; k++)
 		{	
@@ -100,57 +149,42 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 				break;
 
 			case 1: // оператор
-				*codeSize = placeCounter - *counter;
-
 				if (!strcmp(parsedStrings[i][1], "start"))
 				{	
-					if (parsedStrings[i][2][strlen(parsedStrings[i][2]) - 1] != 'h')
-						placeCounter = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
-					else
-						placeCounter = fromHextoInt(rmSymbs(parsedStrings[i][2], "h"));
-
-					if (placeCounter < PLACE_COUNTER_MIN)
-						placeCounter = PLACE_COUNTER_MIN;
+					placeCounter = fromStrToInt(parsedStrings[i][2]);
 					*counter = placeCounter;
 				}
 				else if (!strcmp(parsedStrings[i][1], "resb"))
 				{
-					if (parsedStrings[i][2][strlen(parsedStrings[i][2]) - 1] != 'h')
-						placeCounter += atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
-					else
-						placeCounter += fromHextoInt(rmSymbs(parsedStrings[i][2], "h"));
+					placeCounter += fromStrToInt(parsedStrings[i][2]);
 				}
 				else if (!strcmp(parsedStrings[i][1], "resw"))
 				{
-					if (parsedStrings[i][2][strlen(parsedStrings[i][2]) - 1] != 'h')
-						placeCounter += atoi(parsedStrings[i][2]) * W; // конвертируем первый операнд в integer
-					else
-						placeCounter += fromHextoInt(rmSymbs(parsedStrings[i][2], "h")) * W;
+					placeCounter += fromStrToInt(parsedStrings[i][2]) * W;
 				}
 				else if (!strcmp(parsedStrings[i][1], "byte"))
 				{	
-					int n;
-					if (parsedStrings[i][2][strlen(parsedStrings[i][2]) - 1] != 'h')
-						n = atoi(parsedStrings[i][2]); // конвертируем первый операнд в integer
-					else
-						n = fromHextoInt(rmSymbs(parsedStrings[i][2], "h"));
-
-					if (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57) // число?
+					int n = fromStrToInt(parsedStrings[i][2]);
+					if (isNum(parsedStrings[i][2]))
 						placeCounter += numOfBytes(n);
 					else
 						placeCounter += strlen(parsedStrings[i][2]);
 				}
 				else if (!strcmp(parsedStrings[i][1], "word"))
+				{
 					placeCounter += W;
+				}
 				else if (isKeyOf(comTab, parsedStrings[i][1], c_m, c_s))
 				{
 					if (strlen(parsedStrings[i][3]) != 0)
-							placeCounter += COMMAND_SIZE;
-						else
-							placeCounter += COMMAND_SIZE - 2;
+						placeCounter += COMMAND_SIZE;
+					else if (strlen(parsedStrings[i][2]) != 0)
+						placeCounter += COMMAND_SIZE - 2;
+					else
+						placeCounter += COMMAND_SIZE - 4;
 
 					char str[STRING];
-					sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s));
+					sprintf(str, "%d", getKey(comTab, parsedStrings[i][1], c_m, c_s) + signOfAdress);
 					strcpy(parsedStrings[i][1], str);
 				}
 				else if (!isKeyOf(comTab, parsedStrings[i][1], c_m, c_s) && strcmp(parsedStrings[i][1], "end"))
@@ -178,7 +212,7 @@ Result* firstPass(char** parsedStrings[6], int numberOfStrings,
 						char str[STRING];
 						sprintf(str, "%d", getKey(labelsTable, parsedStrings[i][t], l_m, l_s));
 						strcpy(parsedStrings[i][t], str);
-					}						
+					}
 				}
 				else
 				{
@@ -205,21 +239,17 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 	for (int i = 0; i < numberOfStrings; i++)
 	{	
 		/* Print address and object code */
-		int t = 2, place = 0, spaces = 1, command = 0;
+		int t = 2, place = 0, spaces = 1, byte_command = 0;
 		for (int k = 1; k < 4; k++)
 		{	
 			if (strlen(parsedStrings[i][k]) != 0)
-			{	
+			{
 				switch (k)
 				{
 				case 1: // оператор
-					if (!strcmp(parsedStrings[i][1], "start"))				 // START 
+					if (!strcmp(parsedStrings[i][1], "start"))				 // START
 					{	
-						if (parsedStrings[i][2][strlen(parsedStrings[i][2]) - 1] != 'h')
-							buffer = atoi(parsedStrings[i][2]);
-						else
-							buffer = fromHextoInt(rmSymbs(parsedStrings[i][2], "h"));
-
+						buffer = fromStrToInt(parsedStrings[i][2]);
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись заголовка
 						fwrite(&buffer, (size_t)2, 1, object_file);			 // операнд start
 						buffer = codeSize;
@@ -227,7 +257,7 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						fwrite(filename, (size_t)strlen(filename), 1, object_file); // имя файла
 						++sign; continue;
 					}
-					else if (!strcmp(parsedStrings[i][1], "end"))			 // END 
+					else if (!strcmp(parsedStrings[i][1], "end"))			 // END
 					{
 						++sign;
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись окончания
@@ -236,6 +266,7 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						continue;
 					}
 					
+
 					if (i + 1 < 10 && numberOfStrings > 9) spaces = 2;
 					if (i + 1 < 100 && numberOfStrings > 99) spaces = 3;
 					if (i + 1 < 10000 && numberOfStrings > 999) spaces = 4;
@@ -267,25 +298,17 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						placeCounter += atoi(parsedStrings[i][2]) * W;
 					}
 					else if (!strcmp(parsedStrings[i][1], "byte"))			 // BYTE 
-					{
+					{	
 						int n = -1;
-						if (parsedStrings[i][2][0] >= 48 && parsedStrings[i][2][0] <= 57   ||
-							parsedStrings[i][2][0] == 'A' || parsedStrings[i][2][0] == 'a' ||
-							parsedStrings[i][2][0] == 'B' || parsedStrings[i][2][0] == 'b' ||
-							parsedStrings[i][2][0] == 'C' || parsedStrings[i][2][0] == 'c' ||
-							parsedStrings[i][2][0] == 'D' || parsedStrings[i][2][0] == 'd' ||
-							parsedStrings[i][2][0] == 'E' || parsedStrings[i][2][0] == 'e' ||
-							parsedStrings[i][2][0] == 'F' || parsedStrings[i][2][0] == 'f')
-						if (parsedStrings[i][2][strlen(parsedStrings[i][2]) - 1] != 'h')
-						{
-							n = atoi(parsedStrings[i][2]);
+						if (isNum(parsedStrings[i][2]))
+						{	
+							n = fromStrToInt(parsedStrings[i][2]);
 							buffer = numOfBytes(n) + 2;
 						}
 						else
-							n = fromHextoInt(rmSymbs(parsedStrings[i][2], "h"));
-
-						if (parsedStrings[i][2][0] < 48 && parsedStrings[i][2][0] > 57) // число?
+						{
 							buffer = strlen(parsedStrings[i][2]) + 2;
+						}
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
 						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
@@ -307,7 +330,7 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 							printf("%0*X\n", numOfBytes(n) * 2, n);
 						}
 
-						placeCounter += buffer - 2;
+						placeCounter += buffer - 2; byte_command = 1;
 					}
 					else if (!strcmp(parsedStrings[i][1], "word"))			 // WORD
 					{	
@@ -328,19 +351,23 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
 						if (strlen(parsedStrings[i][3]) != 0)
-							buffer = 5;
+							buffer = COMMAND_SIZE + 2;
+						else if (strlen(parsedStrings[i][2]) != 0)
+							buffer = COMMAND_SIZE;
 						else
-							buffer = 3;
+							buffer = COMMAND_SIZE - 2;
 						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
-						buffer = atoi(parsedStrings[i][2]);
-						fwrite(&buffer, (size_t)1, 1, object_file);			 // команда (1 байт)
+						buffer = atoi(parsedStrings[i][1]);
+						fwrite(&buffer, (size_t)COM_PART_SIZE, 1, object_file);	// команда (1 байт)
 
 						if (strlen(parsedStrings[i][3]) != 0)
 							placeCounter += COMMAND_SIZE;
-						else
+						else if (strlen(parsedStrings[i][2]) != 0)
 							placeCounter += COMMAND_SIZE - 2;
-						place = 1; command = 1;
+						else
+							placeCounter += COMMAND_SIZE - 4;
+						place = 1;
 					}
 					break;
 				
@@ -354,19 +381,19 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						{
 							printf("%0.4X ", getKey(labTab, parsedStrings[i][t], l_m, l_s));
 							buffer = getKey(labTab, parsedStrings[i][t], l_m, l_s);
-							fwrite(&buffer, (size_t)2, 1, object_file);	// машинная команда (3 или 5 байт)
+							fwrite(&buffer, (size_t)COM_PART_SIZE, 1, object_file);	// машинная команда (3 или 5 байт)
 						}
 					}
-					else if (parsedStrings[i][t][0] >= 48 && parsedStrings[i][t][0] <= 57) // число?
+					else if (isNum(parsedStrings[i][t])) // число?
 					{	
 						if (place)
 						{
 							printf("%0.4X ", atoi(parsedStrings[i][t]));
 							buffer = atoi(parsedStrings[i][t]);
-							fwrite(&buffer, (size_t)2, 1, object_file);	// машинная команда (3 или 5 байт)
+							fwrite(&buffer, (size_t)COM_PART_SIZE, 1, object_file);	// машинная команда (3 или 5 байт)
 						}
 					}
-					else if (command)
+					else if (!byte_command)
 					{
 						return i + 1; // error in string number...
 					}
@@ -384,11 +411,18 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 
 int main(int argc, char *argv[])
 {	
+	FILE *fp = fopen(argv[1], "r");
+	if (!fp)
+	{
+		printf("Can't open '%s'!\n", argv[1]);
+		return 0;
+	}
+
 	printf("Initialization...\n\n");
 
 	char c[NUMBER_OF_COMMANDS][STRING] = COMMANDS;
 	char** commands = (char**) calloc(NUMBER_OF_COMMANDS, sizeof(char*));
-	int *commandsData = (int*) calloc(NUMBER_OF_COMMANDS, sizeof(int)); int start = 13;
+	int *commandsData = (int*) calloc(NUMBER_OF_COMMANDS, sizeof(int)); int start = 1;
 	for (int i = 0; i < NUMBER_OF_COMMANDS; i++)
 	{
 		commands[i] = (char*)calloc(STRING, sizeof(char));
@@ -425,7 +459,6 @@ int main(int argc, char *argv[])
 	printf("\n\nWorking...\n\n");
 
 	/* Parsing assembly strings */
-	FILE *fp = fopen(argv[1], "r");
 	char str[MAXCHAR];
 	int numberOfStrings = 0;
 	static char** parsedStrings[6];
@@ -450,7 +483,6 @@ int main(int argc, char *argv[])
 	fclose(fp);
 	puts("");
 
-
 	int placeCounterStart, errorLine = -1, codeSize;
 	result = firstPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
 					   commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift,
@@ -467,14 +499,12 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	
-
 	puts("Результат:\n");
 	int res_code = secondPass(parsedStrings, numberOfStrings, registersTable, reg_m, reg_shift,
 							  commandsTable, com_m, com_shift, labelsTable, lab_m, lab_shift,
 							  placeCounterStart, codeSize, argv[1]);
 	if (res_code)
 		printf("Error in string #%d - unknown identifier!\n", res_code);
-	
 
 	return 0;
 }
