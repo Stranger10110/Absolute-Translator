@@ -276,9 +276,9 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						printf("%0*X\n", atoi(parsedStrings[i][2]) * 2, 0);
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
-						buffer = atoi(parsedStrings[i][2]) + 2;
-						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = atoi(parsedStrings[i][2]);
+						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						buffer = 0;
 						fwrite(&buffer, (size_t)1, atoi(parsedStrings[i][2]), object_file); // нули
 						
@@ -289,9 +289,9 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						printf("%0*X\n", atoi(parsedStrings[i][2]) * W * 2, 0);
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
-						buffer = atoi(parsedStrings[i][2]) * W + 2;
-						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = atoi(parsedStrings[i][2]) * W;
+						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						buffer = 0;
 						fwrite(&buffer, (size_t)1, atoi(parsedStrings[i][2]) * W, object_file);	// нули
 
@@ -303,16 +303,16 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						if (isNum(parsedStrings[i][2]))
 						{	
 							n = fromStrToInt(parsedStrings[i][2]);
-							buffer = numOfBytes(n) + 2;
+							buffer = numOfBytes(n);
 						}
 						else
 						{
-							buffer = strlen(parsedStrings[i][2]) + 2;
+							buffer = strlen(parsedStrings[i][2]);
 						}
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
-						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						if (n == -1)
 						{	
 							char *str = rmSymbs(parsedStrings[i][2], "\"\'");
@@ -330,16 +330,16 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 							printf("%0*X\n", numOfBytes(n) * 2, n);
 						}
 
-						placeCounter += buffer - 2; byte_command = 1;
+						placeCounter += buffer; byte_command = 1;
 					}
 					else if (!strcmp(parsedStrings[i][1], "word"))			 // WORD
 					{	
 						printf("%0.8X\n", atoi(parsedStrings[i][2]));
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
-						buffer = 4;
-						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						buffer = W;
+						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						buffer = atoi(parsedStrings[i][2]);
 						fwrite(&buffer, (size_t)W, 1, object_file);	 		 // число размером W байта
 
@@ -350,14 +350,14 @@ int secondPass(char** parsedStrings[6], int numberOfStrings,
 						printf("%.2X ", atoi(parsedStrings[i][1]));
 
 						fwrite(&sign, sizeof(char), 1, object_file);		 // запись тела программы
-						if (strlen(parsedStrings[i][3]) != 0)
-							buffer = COMMAND_SIZE + 2;
-						else if (strlen(parsedStrings[i][2]) != 0)
-							buffer = COMMAND_SIZE;
-						else
-							buffer = COMMAND_SIZE - 2;
-						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						fwrite(&placeCounter, (size_t)2, 1, object_file);	 // адресс
+						if (strlen(parsedStrings[i][3]) != 0)
+							buffer = COMMAND_SIZE;
+						else if (strlen(parsedStrings[i][2]) != 0)
+							buffer = COMMAND_SIZE - 2;
+						else
+							buffer = COMMAND_SIZE - 4;
+						fwrite(&buffer, (size_t)1, 1, object_file);			 // длина записи
 						buffer = atoi(parsedStrings[i][1]);
 						fwrite(&buffer, (size_t)COM_PART_SIZE, 1, object_file);	// команда (1 байт)
 
